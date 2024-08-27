@@ -1,0 +1,9 @@
+git+https://github.com/viperadnan-git/sonicbit-python-sdk.git
+deta
+python-dotenv
+feedparser
+requests
+pymongo
+nanoid
+apscheduler
+humanize

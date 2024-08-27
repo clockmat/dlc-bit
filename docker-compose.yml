@@ -1,0 +1,6 @@
+services:
+  rssbox-sonicbit:
+    container_name: rssbox-sonicbit
+    build: .
+    env_file:
+      - .env
