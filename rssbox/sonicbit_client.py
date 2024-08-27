@@ -217,10 +217,7 @@ class SonicBitClient:
                 break
 
             try:
-                result = sonicbit.add_download(download=download)
-                if not result:
-                    raise Exception("Failed to add download")
-
+                sonicbit.add_download(download=download)
                 logger.info(f"Torrent {download.name} added to {sonicbit.id}")
             except Exception as error:
                 download.unlock()

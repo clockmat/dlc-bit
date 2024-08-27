@@ -47,18 +47,21 @@ class SonicBit(SonicBitClient):
             torrent.delete(with_file=True)
 
 
-    def add_download(self, download: Download) -> bool:
+    def add_download(self, download: Download):
         self.purge()
 
-        [download_url] = self.add_torrent(uri=download.url)
+        try:
+            [download_url] = self.add_torrent(uri=download.url)
+        except Exception as error:
+            self.mark_as_idle()
+            raise error
         
         if download_url == download.url:
             hash = self.get_torrent_hash(download.url)
             self.mark_as_downloading(download, hash=hash)
         else:
             self.mark_as_idle()
-            return False
-        return True
+            raise Exception("Download URL does not match")
 
     def save(self):
         self.client.update_one(
