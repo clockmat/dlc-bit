@@ -38,7 +38,7 @@ class PTXFileHandler(FileHandler):
         count = 0
         for torrent_file in torrent.files:
             if self.check_extension(torrent_file.extension):
-               logger.info(f"Uploading {torrent_file.name} {torrent_file.extension} {torrent_file.download_url}")
+               logger.debug(f"Uploading {torrent_file.name} ({torrent_file.extension}) ({torrent_file.download_url})")
                count += self.upload_file(torrent_file.download_url, download.name)
         
         return count
