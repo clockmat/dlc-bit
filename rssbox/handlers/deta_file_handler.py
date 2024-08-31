@@ -51,11 +51,6 @@ class DetaFileHandler(FileHandler):
         self.upload_file(file, filepath, filename)
         return 1
 
-    def check_extension(self, ext: str):
-        if ext.lower() in Config.FILTER_EXTENSIONS:
-            return True
-        return False
-
     def download_file(self, file: TorrentFile, filepath: str, filename: str) -> str:
         if os.path.exists(filepath) and os.path.getsize(filepath) == file.size:
             return filepath
