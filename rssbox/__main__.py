@@ -2,20 +2,18 @@ import logging
 
 from rssbox import (
     accounts,
-    deta,
     downloads,
-    files,
     scheduler,
     watchrss_database,
     workers,
 )
 from rssbox.config import Config
-from rssbox.handlers.deta_file_handler import DetaFileHandler
 from rssbox.utils import clean_empty_dirs
 
 from .modules.download import Download
 from .modules.watchrss import WatchRSS
 from .sonicbit_client import SonicBitClient
+from .handlers.ptx_file_handler import PTXFileHandler
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +39,7 @@ watchrss = WatchRSS(
 watchrss.check()
 scheduler.add_job(watchrss.check, "interval", minutes=1, id="watchrss_check")
 
-file_handler = DetaFileHandler(deta, files)
+file_handler = PTXFileHandler()
 
 sonicbit_client = SonicBitClient(accounts, downloads, workers, scheduler, file_handler)
 sonicbit_client.start()

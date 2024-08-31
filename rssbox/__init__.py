@@ -3,7 +3,6 @@ import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from bson.codec_options import CodecOptions
-from deta import Deta
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
@@ -31,12 +30,9 @@ logging.basicConfig(
     ],
 )
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-logging.getLogger("deta").setLevel(logging.WARNING)
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-deta = Deta(Config.DETA_KEY)
-files = deta.Base("files")
 
 
 mongo_client = MongoClient(Config.MONGO_URL)
