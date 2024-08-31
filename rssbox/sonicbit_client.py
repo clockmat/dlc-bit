@@ -5,17 +5,14 @@ from time import sleep
 
 import nanoid
 from apscheduler.schedulers.background import BackgroundScheduler
-from deta import Deta, _Base
 from pymongo import ReturnDocument
 from pymongo.collection import Collection
-from requests.exceptions import ConnectionError
 
 from rssbox.enum import DownloadStatus, SonicBitStatus
 from rssbox.handlers.file_handler import FileHandler
 from rssbox.handlers.worker_handler import WorkerHandler
 from rssbox.modules.download import Download
 from rssbox.modules.heartbeat import Heartbeat
-from sonicbit.types import TorrentList, Torrent
 from rssbox.modules.sonicbit import SonicBit
 
 logger = logging.getLogger(__name__)
@@ -27,6 +24,7 @@ class SonicBitClient:
     downloads: Collection
     workers: Collection
     scheduler: BackgroundScheduler
+    file_handler: FileHandler
 
     def __init__(
         self,
@@ -34,16 +32,14 @@ class SonicBitClient:
         downloads: Collection,
         workers: Collection,
         scheduler: BackgroundScheduler,
-        deta: Deta,
-        files: _Base,
+        file_handler: FileHandler,
     ):
         self.id = nanoid.generate(alphabet="1234567890abcdef")
         self.accounts = accounts
         self.downloads = downloads
         self.workers = workers
         self.scheduler = scheduler
-        self.deta = deta
-        self.files = files
+        self.file_handler = file_handler
 
         logger.info(f"Initializing SonicBitClient with ID: {self.id}")
 
@@ -51,7 +47,6 @@ class SonicBitClient:
         self.worker_handler = WorkerHandler(
             self.workers, self.accounts, self.downloads, self.scheduler
         )
-        self.file_handler = FileHandler(self.deta, self.files)
 
         self.worker_handler.clean_stale_sonicbit_and_workers()
 
@@ -203,7 +198,6 @@ class SonicBitClient:
                     sonicbit.update_status(SonicBitStatus.DOWNLOADING)
                     sleep(5)
 
-
     def begin_download(self):
         while True:
             download = self.get_pending_download()
@@ -213,7 +207,7 @@ class SonicBitClient:
             sonicbit = self.get_free_sonicbit()
             if not sonicbit:
                 download.unlock()
-                logger.info("No sonicbit accounts available for downloading")
+                logger.debug("No sonicbit accounts available for downloading")
                 break
 
             try:

@@ -1,15 +1,17 @@
 import logging
-from datetime import datetime, timedelta, timezone
 import re
+from datetime import datetime, timedelta, timezone
 
 from pymongo.collection import Collection
 from sonicbit import SonicBit as SonicBitClient
+
 from rssbox import downloads, mongo_client
 from rssbox.enum import SonicBitStatus
 from rssbox.modules.download import Download
 from rssbox.modules.token_handler import TokenHandler
 
 logger = logging.getLogger(__name__)
+
 
 class SonicBit(SonicBitClient):
     client: Collection
@@ -31,8 +33,12 @@ class SonicBit(SonicBitClient):
         self.last_checked_at = account.get("last_checked_at", None)
         self.__download = None
 
-        super().__init__(email=self.id, password=account["password"], token=account.get("token", None), token_handler=TokenHandler(self.client))
-
+        super().__init__(
+            email=self.id,
+            password=account["password"],
+            token=account.get("token", None),
+            token_handler=TokenHandler(self.client),
+        )
 
     def get_download_link(self, file: dict | str):
         if isinstance(file, dict):
@@ -46,7 +52,6 @@ class SonicBit(SonicBitClient):
         for torrent in torrent_list.torrents.values():
             torrent.delete(with_file=True)
 
-
     def add_download(self, download: Download):
         self.purge()
 
@@ -55,7 +60,7 @@ class SonicBit(SonicBitClient):
         except Exception as error:
             self.mark_as_idle()
             raise error
-        
+
         if download_url == download.url:
             hash = self.get_torrent_hash(download.url)
             self.mark_as_downloading(download, hash=hash)
@@ -84,9 +89,7 @@ class SonicBit(SonicBitClient):
             self.locked_by = None
         self.save()
 
-    def mark_as_downloading(
-        self, download: Download, hash: str
-    ):
+    def mark_as_downloading(self, download: Download, hash: str):
         self.download_id = download.id
         self.added_at = datetime.now(tz=timezone.utc)
         self.status = SonicBitStatus.DOWNLOADING
@@ -152,16 +155,16 @@ class SonicBit(SonicBitClient):
         if not self.__download:
             self.__download = self.get_download()
         return self.__download
-    
+
     @property
     def time_taken(self):
         if self.added_at:
-            return str(datetime.now(tz=timezone.utc) - self.added_at).split('.', 2)[0]
-        
+            return str(datetime.now(tz=timezone.utc) - self.added_at).split(".", 2)[0]
+
         self.added_at = datetime.now(tz=timezone.utc)
         self.save()
         return self.time_taken
-    
+
     def get_torrent_hash(self, uri: str) -> str | None:
         if uri.startswith("magnet:"):
             return re.search(r"xt=urn:btih:([a-zA-Z0-9]+)", uri).group(1).upper()
