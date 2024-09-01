@@ -28,3 +28,6 @@ class Config:
         or os.environ.get("LOG_LEVEL", "INFO").upper() == "DEBUG"
     )
     LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
+
+    DOWNLOAD_TIMEOUT = int(os.environ.get("DOWNLOAD_TIMEOUT", 60 * 60 * 2.5))
+    DOWNLOAD_RETRIES = int(os.environ.get("DOWNLOAD_RETRIES", 5))
