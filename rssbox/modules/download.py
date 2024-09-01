@@ -80,6 +80,8 @@ class Download:
         if self.retries >= Config.DOWNLOAD_RETRIES:
             logger.warning(f"Retry limit reached for {self.name}")
             self.status = DownloadStatus.ERROR
+            self.hash = None
+            self.locked_by = None
             self.save()
         else:
             self.mark_as_pending()
