@@ -192,7 +192,7 @@ class SonicBitClient:
                         f"Download timed out for {download.name} by {sonicbit.id}"
                     )
                 else:
-                    logger.info(
+                    logger.debug(
                         f"Download in progress for {download.name} by {sonicbit.id} ({torrent.progress}%) ({sonicbit.time_taken})"
                     )
                     sonicbit.update_status(SonicBitStatus.DOWNLOADING)

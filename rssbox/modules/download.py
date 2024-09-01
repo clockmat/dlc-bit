@@ -5,6 +5,8 @@ from feedparser import FeedParserDict
 from pymongo.collection import Collection
 from pymongo.errors import DuplicateKeyError
 
+from rssbox.config import Config
+
 from ..enum import DownloadStatus
 
 logger = logging.getLogger(__name__)
@@ -75,7 +77,7 @@ class Download:
         if not soft:
             self.retries += 1
 
-        if self.retries >= 5:
+        if self.retries >= Config.DOWNLOAD_RETRIES:
             logger.warning(f"Retry limit reached for {self.name}")
             self.status = DownloadStatus.ERROR
             self.save()

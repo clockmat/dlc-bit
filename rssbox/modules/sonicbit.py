@@ -6,6 +6,7 @@ from pymongo.collection import Collection
 from sonicbit import SonicBit as SonicBitClient
 
 from rssbox import downloads, mongo_client
+from rssbox.config import Config
 from rssbox.enum import SonicBitStatus
 from rssbox.modules.download import Download
 from rssbox.modules.token_handler import TokenHandler
@@ -134,7 +135,7 @@ class SonicBit(SonicBitClient):
                 self.mark_as_idle()
                 self.download.mark_as_pending()
 
-    def download_timeout(self, timeout: int = 60 * 60 * 2.5) -> bool:
+    def download_timeout(self, timeout: int = Config.DOWNLOAD_TIMEOUT) -> bool:
         if self.added_at and self.added_at + timedelta(seconds=timeout) < datetime.now(
             tz=timezone.utc
         ):
