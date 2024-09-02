@@ -84,7 +84,7 @@ class Download:
             self.save()
         else:
             self.mark_as_pending()
-    
+
     def mark_as_timeout(self):
         self.status = DownloadStatus.TIMEOUT
         self.hash = None

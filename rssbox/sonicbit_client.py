@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from ssl import SSLEOFError
 from time import sleep
 
 import nanoid
@@ -173,7 +172,9 @@ class SonicBitClient:
                     files_uploaded = self.file_handler.upload(download, torrent)
                     if files_uploaded:
                         sonicbit.mark_as_completed()
-                        self.hook.on_upload_complete(sonicbit, download.dict, files_uploaded)
+                        self.hook.on_upload_complete(
+                            sonicbit, download.dict, files_uploaded
+                        )
                     else:
                         logger.info(
                             f"No files uploaded for {download.name} by {sonicbit.id}"

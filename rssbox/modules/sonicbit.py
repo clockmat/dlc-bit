@@ -126,7 +126,7 @@ class SonicBit(SonicBitClient):
             with session.start_transaction():
                 self.mark_as_idle()
                 self.download.delete()
-    
+
     def mark_as_timeout(self):
         with mongo_client.start_session() as session:
             with session.start_transaction():
