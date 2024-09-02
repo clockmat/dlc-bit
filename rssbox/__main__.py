@@ -5,14 +5,12 @@ from feedparser import FeedParserDict
 
 from rssbox import accounts, downloads, scheduler, watchrss_database, workers
 from rssbox.config import Config
-from rssbox.handlers.file_handler import FileHandler
+from rssbox.handlers.ptx_file_handler import PTXFileHandler
 from rssbox.hooks.hook import Hook
+from rssbox.modules.download import Download
+from rssbox.modules.watchrss import WatchRSS
+from rssbox.sonicbit_client import SonicBitClient
 from rssbox.utils import clean_empty_dirs
-
-from .modules.download import Download
-from .modules.watchrss import WatchRSS
-from .sonicbit_client import SonicBitClient
-from .handlers.ptx_file_handler import PTXFileHandler
 
 logger = logging.getLogger(__name__)
 hook = Hook()

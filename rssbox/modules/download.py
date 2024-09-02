@@ -6,8 +6,7 @@ from pymongo.collection import Collection
 from pymongo.errors import DuplicateKeyError
 
 from rssbox.config import Config
-
-from ..enum import DownloadStatus
+from rssbox.enum import DownloadStatus
 
 logger = logging.getLogger(__name__)
 
@@ -86,16 +85,18 @@ class Download:
         else:
             self.mark_as_pending()
 
+    def mark_as_timeout(self):
+        self.status = DownloadStatus.TIMEOUT
+        self.hash = None
+        self.locked_by = None
+        self.save()
+
     def unlock(self):
         self.locked_by = None
         self.save()
 
     def delete(self):
         self.client.delete_one({"_id": self.id})
-
-    def update_status(self, status: DownloadStatus):
-        self.status = status
-        self.save()
 
     @staticmethod
     def from_entry(client: Collection, entry: FeedParserDict):
