@@ -3,6 +3,7 @@ import math
 import os
 import re
 from time import sleep
+from typing import Generator
 
 from nanoid import generate
 from requests import Session
@@ -158,6 +159,13 @@ class PTXFileHandler(FileHandler):
             self.url("/upload-video/"), data=data, params=params
         ).json()
 
+    def read_file_in_chunks(
+        self, file: str, chunk_size: int
+    ) -> Generator[bytes, None, None]:
+        with open(file, "rb") as f:
+            while content := f.read(chunk_size):
+                yield content
+
     def start_manual_upload(self, download_url: str) -> str:
         filecode = self.generate_filecode()
         filepath = self.download_file(filecode, download_url)
@@ -179,28 +187,29 @@ class PTXFileHandler(FileHandler):
             "size": (None, str(filesize)),
         }
 
-        for i in range(chunks):
-            fields["index"] = (None, str(i + 1))
+        for i, chunk in enumerate(
+            self.read_file_in_chunks(filepath, self.MANUAL_UPLOAD_CHUNK_SIZE)
+        ):
+            chunk_fields = {
+                **fields,
+                "index": (None, str(i + 1)),
+                "content": ("blob", chunk, "application/octet-stream"),
+            }
 
-            start = i * self.MANUAL_UPLOAD_CHUNK_SIZE
-            open_file = open(filepath, "rb")
-            open_file.seek(start)
-            file = open_file.read(self.MANUAL_UPLOAD_CHUNK_SIZE)
-
-            fields["content"] = ("blob", file, "application/octet-stream")
-
-            response = self.session.post(self.url("/upload-video/"), params=params, files=fields).json()
+            response = self.session.post(
+                self.url("/upload-video/"), params=params, files=chunk_fields
+            ).json()
             if not response["status"] == "success":
                 self.delete_filecode(filecode)
                 raise Exception(response["errors"][0]["message"])
 
-        del fields["content"]
         fields["index"] = (None, "0")
-        response = self.session.post(self.url("/upload-video/"), params=params, files=fields).json()
+        response = self.session.post(
+            self.url("/upload-video/"), params=params, files=fields
+        ).json()
 
         if response["status"] == "success":
-            filename = response["data"].get("filename")
-            if filename:
+            if filename := response["data"].get("filename"):
                 self.delete_filecode(filecode)
                 return filename
 
