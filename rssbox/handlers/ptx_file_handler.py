@@ -1,11 +1,17 @@
-from time import sleep
 import logging
+import math
 import os
+import re
+from time import sleep
+
+from nanoid import generate
+from requests import Session
+from sonicbit.types import Torrent
+
+from rssbox.config import Config
 from rssbox.handlers.file_handler import FileHandler
 from rssbox.modules.download import Download
-from sonicbit.types import Torrent
-from requests import Session
-from nanoid import generate
+from rssbox.utils import delete_file
 
 logger = logging.getLogger(__name__)
 
@@ -30,28 +36,51 @@ class PTXFileHandler(FileHandler):
                 "Cache-Control": "no-cache",
             }
         )
+        self.REGEX_TO_REMOVE = [r"(MP4-[a-zA-Z0-9]+\s\[XC\])"]
+        self.MANUAL_UPLOAD_CHUNK_SIZE = 150 * 1024 * 1024
+
+        if os.path.exists(Config.DOWNLOAD_PATH):
+            delete_file(Config.DOWNLOAD_PATH)
+            os.makedirs(Config.DOWNLOAD_PATH)
 
     def url(self, path: str) -> str:
         return f"{self.__base_url}{path}"
 
     def upload(self, download: Download, torrent: Torrent) -> int:
-        count = 0
+        # always return 1 to skip images
+        count = 1
         for torrent_file in torrent.files:
             if self.check_extension(torrent_file.extension):
-               logger.debug(f"Uploading {torrent_file.name} ({torrent_file.extension}) ({torrent_file.download_url})")
-               count += self.upload_file(torrent_file.download_url, download.name)
-        
+                logger.debug(
+                    f"Uploading {torrent_file.name} ({torrent_file.extension}) ({torrent_file.download_url})"
+                )
+                count += self.upload_file(torrent_file.download_url, download.name)
+
         return count
 
     def upload_file(self, download_url: str, filename: str) -> int:
         logger.info(f"Uploading {filename}")
-        filecode = self.start_upload(download_url)
-        filecode = self.wait_for_upload(filecode, download_url)
+
+        try:
+            filecode = self.start_upload(download_url)
+            filecode = self.wait_for_upload(filecode, download_url)
+        except Exception as error:
+            if (
+                str(error)
+                == "The specified URL is not working or does not return video file"
+            ):
+                logger.info(f"Starting manual upload for {filename}")
+                filecode = self.start_manual_upload(download_url)
+            else:
+                raise error
+
         self.publish(filecode, filename)
         logger.info(f"Uploaded {filename}")
         return 1
 
     def publish(self, filecode: str, filename: str) -> int:
+        filename = self.sanitize_filename(filename)
+
         data = [
             (
                 "title",
@@ -91,11 +120,11 @@ class PTXFileHandler(FileHandler):
             elif json["status"] == "success" and json["data"].get("filename"):
                 return json["data"]["filename"]
             elif json["status"] == "failure":
-                error = json["errors"][0]["message"]
-                if error['code'] == 'duplicate':
+                error_message = json["errors"][0]["message"]
+                if error_message == "duplicate":
                     return filecode
                 else:
-                    raise Exception(error)
+                    raise Exception(error_message)
             else:
                 raise Exception(
                     f"Unable to get upload status for filecode: {filecode}, download_url: {download_url}"
@@ -111,13 +140,12 @@ class PTXFileHandler(FileHandler):
         else:
             raise Exception(json["errors"][0]["message"])
 
-
     def upload_request(self, filecode: str, download_url: str) -> dict:
         data = {
             "upload_option": "url",
             "filename": filecode,
             "upload_v2": "true",
-            "url": download_url
+            "url": download_url,
         }
 
         params = {
@@ -126,9 +154,88 @@ class PTXFileHandler(FileHandler):
             "action": "upload_file",
         }
 
-        return self.session.post(self.url("/upload-video/"), data=data, params=params).json()
+        return self.session.post(
+            self.url("/upload-video/"), data=data, params=params
+        ).json()
+
+    def start_manual_upload(self, download_url: str) -> str:
+        filecode = self.generate_filecode()
+        filepath = self.download_file(filecode, download_url)
+        filesize = os.path.getsize(filepath)
+
+        params = {
+            "mode": "async",
+            "format": "json",
+            "action": "upload_file",
+        }
+
+        chunks = math.ceil(filesize / self.MANUAL_UPLOAD_CHUNK_SIZE)
+        fields = {
+            "filename": (None, filecode),
+            "realname": (None, f"{filecode}.mp4"),
+            "upload_option": (None, "file"),
+            "chunks": (None, str(chunks)),
+            "index": (None, "1"),
+            "size": (None, str(filesize)),
+        }
+
+        for i in range(chunks):
+            fields["index"] = (None, str(i + 1))
+
+            start = i * self.MANUAL_UPLOAD_CHUNK_SIZE
+            open_file = open(filepath, "rb")
+            open_file.seek(start)
+            file = open_file.read(self.MANUAL_UPLOAD_CHUNK_SIZE)
+
+            fields["content"] = ("blob", file, "application/octet-stream")
+
+            response = self.session.post(self.url("/upload-video/"), params=params, files=fields).json()
+            if not response["status"] == "success":
+                self.delete_filecode(filecode)
+                raise Exception(response["errors"][0]["message"])
+
+        del fields["content"]
+        fields["index"] = (None, "0")
+        response = self.session.post(self.url("/upload-video/"), params=params, files=fields).json()
+
+        if response["status"] == "success":
+            filename = response["data"].get("filename")
+            if filename:
+                self.delete_filecode(filecode)
+                return filename
+
+        self.delete_filecode(filecode)
+        raise Exception(response["errors"][0]["message"])
+
+    def download_file(self, filecode: str, download_url: str) -> str:
+        filedir = os.path.join(Config.DOWNLOAD_PATH, filecode)
+        if not os.path.exists(filedir):
+            os.makedirs(filedir)
+
+        filepath = os.path.join(filedir, f"{filecode}.mp4")
+
+        with self.session.get(download_url, stream=True) as response:
+            if (
+                os.path.exists(filepath)
+                and str(os.path.getsize(filepath)) == response.headers["Content-Length"]
+            ):
+                return filepath
+
+            with open(filepath, "wb") as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+
+        return filepath
 
     def generate_filecode(self) -> str:
         return "6" + generate(alphabet="1234567890", size=31)
 
+    def sanitize_filename(self, filename: str) -> str:
+        for regex in self.REGEX_TO_REMOVE:
+            filename = re.sub(regex, "", filename)
+        return filename.strip()
 
+    def delete_filecode(self, filecode: str):
+        filedir = os.path.join(Config.DOWNLOAD_PATH, filecode)
+        delete_file(filedir)
