@@ -55,7 +55,11 @@ class PTXFileHandler(FileHandler):
                 logger.debug(
                     f"Uploading {torrent_file.name} ({torrent_file.extension}) ({torrent_file.download_url})"
                 )
-                count += self.upload_file(torrent_file.download_url, download.name)
+                try:
+                    count += self.upload_file(torrent_file.download_url, download.name)
+                except Exception as error:
+                    logger.exception(error)
+                    raise error
 
         return count
 
