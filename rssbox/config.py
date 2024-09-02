@@ -15,7 +15,12 @@ class Config:
 
     FILTER_EXTENSIONS = os.environ.get("FILTER_EXTENSIONS", DEFAULT_FILTER_EXTENSIONS)
     FILTER_EXTENSIONS = list(
-        set(map(lambda x: x.strip().lower(), FILTER_EXTENSIONS.split(",")))
+        set(
+            map(
+                lambda x: x.strip().lower().replace(".", ""),
+                FILTER_EXTENSIONS.split(","),
+            )
+        )
     )
 
     DOWNLOAD_PATH = os.environ.get("DOWNLOAD_PATH", "downloads")

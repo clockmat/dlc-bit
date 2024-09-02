@@ -11,6 +11,7 @@ from pymongo.collection import Collection
 from rssbox.enum import DownloadStatus, SonicBitStatus
 from rssbox.handlers.file_handler import FileHandler
 from rssbox.handlers.worker_handler import WorkerHandler
+from rssbox.hooks.hook import Hook
 from rssbox.modules.download import Download
 from rssbox.modules.heartbeat import Heartbeat
 from rssbox.modules.sonicbit import SonicBit
@@ -25,6 +26,7 @@ class SonicBitClient:
     workers: Collection
     scheduler: BackgroundScheduler
     file_handler: FileHandler
+    hook: Hook
 
     def __init__(
         self,
@@ -33,6 +35,7 @@ class SonicBitClient:
         workers: Collection,
         scheduler: BackgroundScheduler,
         file_handler: FileHandler,
+        hook: Hook,
     ):
         self.id = nanoid.generate(alphabet="1234567890abcdef")
         self.accounts = accounts
@@ -40,6 +43,7 @@ class SonicBitClient:
         self.workers = workers
         self.scheduler = scheduler
         self.file_handler = file_handler
+        self.hook = hook
 
         logger.info(f"Initializing SonicBitClient with ID: {self.id}")
 
@@ -126,12 +130,11 @@ class SonicBitClient:
             return None
 
     def check_downloads(self):
-        limit = 3
         timeout_in_seconds = 8 * 60  # 8 minutes
         now = datetime.now(tz=timezone.utc)
 
         while True:
-            if limit <= 0 or datetime.now(tz=timezone.utc) - now > timedelta(
+            if datetime.now(tz=timezone.utc) - now > timedelta(
                 seconds=timeout_in_seconds
             ):
                 break
@@ -150,7 +153,7 @@ class SonicBitClient:
                 continue
             if not download.hash:
                 logger.info(
-                    f"SonicBit downloaded but no download name found for {sonicbit.download_id} ({sonicbit.id})"
+                    f"SonicBit downloaded but no download hash found for {sonicbit.download_id} ({sonicbit.id})"
                 )
                 sonicbit.reset()
                 continue
@@ -159,7 +162,8 @@ class SonicBitClient:
             torrent = torrent_list.torrents.get(download.hash)
             if not torrent:
                 logger.info(f"Torrent not found for {download.name} by {sonicbit.id}")
-                sonicbit.reset()
+                if self.hook.on_sonicbit_download_not_found(sonicbit, download):
+                    sonicbit.reset()
                 continue
 
             if torrent.progress == 100:
@@ -169,7 +173,6 @@ class SonicBitClient:
                     files_uploaded = self.file_handler.upload(download, torrent)
                     if files_uploaded:
                         sonicbit.mark_as_completed()
-                        limit -= 1
                     else:
                         logger.info(
                             f"No files uploaded for {download.name} by {sonicbit.id}"

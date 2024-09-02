@@ -34,7 +34,6 @@ logging.getLogger("pymongo").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-
 mongo_client = MongoClient(Config.MONGO_URL)
 options = CodecOptions(tz_aware=True)
 

@@ -28,7 +28,9 @@ class WorkerHandler:
         )
 
     def clean_stale_sonicbit_and_workers(self):
-        logger.debug("Unlocking idle or stale workers, sonicbit accounts, and downloads")
+        logger.debug(
+            "Unlocking idle or stale workers, sonicbit accounts, and downloads"
+        )
 
         timeout_period = timedelta(seconds=40)
         current_time = datetime.now(tz=timezone.utc)

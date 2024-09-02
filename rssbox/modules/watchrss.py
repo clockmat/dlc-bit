@@ -70,6 +70,10 @@ class WatchRSS:
         self.update_last_saved_on()
 
         parsed = parse(self.url)
+
+        if not parsed.entries:
+            return
+        
         entries = [
             entry
             for entry in parsed.entries
@@ -79,19 +83,21 @@ class WatchRSS:
         logger.debug("There are {} new entries".format(len(entries)))
         last_saved_on = self.struct_to_datetime(parsed.entries[0].published_parsed)
 
-        if entries:
-            try:
-                confirm = self.callback(entries)
-                if self.check_confirmation:
-                    if confirm:
-                        self.update_last_saved_on(last_saved_on)
-                    else:
-                        logger.warning(
-                            "Callback returned False, not updating last_saved_on timestamp"
-                        )
-                else:
+        if not entries:
+            return
+
+        try:
+            confirm = self.callback(entries)
+            if self.check_confirmation:
+                if confirm:
                     self.update_last_saved_on(last_saved_on)
-            except Exception:
-                logger.exception(
-                    "Error while calling callback, not updating last_saved_on timestamp"
-                )
+                else:
+                    logger.warning(
+                        "Callback returned False, not updating last_saved_on timestamp"
+                    )
+            else:
+                self.update_last_saved_on(last_saved_on)
+        except Exception:
+            logger.exception(
+                "Error while calling callback, not updating last_saved_on timestamp"
+            )

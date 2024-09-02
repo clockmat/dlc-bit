@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime, timedelta, timezone
+from time import sleep
 
 from pymongo.collection import Collection
 from sonicbit import SonicBit as SonicBitClient
@@ -52,6 +53,8 @@ class SonicBit(SonicBitClient):
         torrent_list = self.list_torrents()
         for torrent in torrent_list.torrents.values():
             torrent.delete(with_file=True)
+        # wait for purge to complete
+        sleep(3)
 
     def add_download(self, download: Download):
         self.purge()
