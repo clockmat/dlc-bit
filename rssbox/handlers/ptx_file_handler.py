@@ -37,7 +37,12 @@ class PTXFileHandler(FileHandler):
                 "Cache-Control": "no-cache",
             }
         )
-        self.REGEX_TO_REMOVE = [r"(MP4-[a-zA-Z0-9]+\s\[XC\])"]
+
+        self.REGEX_TO_REPLACE = [
+            (r"(MP4-[a-zA-Z0-9]+\s\[XC\])", ""),
+            (".", " "),
+            (r"\s{2,}", " "),
+        ]
         self.MANUAL_UPLOAD_CHUNK_SIZE = 150 * 1024 * 1024
 
         if os.path.exists(Config.DOWNLOAD_PATH):
@@ -67,6 +72,9 @@ class PTXFileHandler(FileHandler):
                 count += self.upload_file(torrent_file.download_url, filename)
             except Exception as error:
                 if str(error) == "Such video file already uploaded":
+                    logger.warning(
+                        f"Skipping upload because file already exists: {filename}"
+                    )
                     count += 1
                 else:
                     logger.exception(error)
@@ -262,10 +270,8 @@ class PTXFileHandler(FileHandler):
         return "6" + generate(alphabet="1234567890", size=31)
 
     def sanitize_filename(self, filename: str) -> str:
-        for regex in self.REGEX_TO_REMOVE:
-            filename = re.sub(regex, "", filename)
-
-        filename = re.sub(r"\s{2,}", " ", filename)
+        for regex, replacement in self.REGEX_TO_REPLACE:
+            filename = re.sub(regex, replacement, filename)
         return filename.strip()
 
     def delete_filecode(self, filecode: str):
