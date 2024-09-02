@@ -162,9 +162,11 @@ class PTXFileHandler(FileHandler):
             "action": "upload_file",
         }
 
-        return self.session.post(
+        response = self.session.post(
             self.url("/upload-video/"), data=data, params=params
-        ).json()
+        )
+        response.raise_for_status()
+        return response.json()
 
     def read_file_in_chunks(
         self, file: str, chunk_size: int
@@ -205,15 +207,20 @@ class PTXFileHandler(FileHandler):
 
             response = self.session.post(
                 self.url("/upload-video/"), params=params, files=chunk_fields
-            ).json()
+            )
+            response.raise_for_status()
+            response = response.json()
             if not response["status"] == "success":
                 self.delete_filecode(filecode)
                 raise Exception(response["errors"][0]["message"])
 
+
         fields["index"] = (None, "0")
         response = self.session.post(
             self.url("/upload-video/"), params=params, files=fields
-        ).json()
+        )
+        response.raise_for_status()
+        response = response.json()
 
         if response["status"] == "success":
             if filename := response["data"].get("filename"):
