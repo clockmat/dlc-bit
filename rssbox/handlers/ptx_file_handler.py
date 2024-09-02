@@ -58,8 +58,11 @@ class PTXFileHandler(FileHandler):
                 try:
                     count += self.upload_file(torrent_file.download_url, download.name)
                 except Exception as error:
-                    logger.exception(error)
-                    raise error
+                    if str(error) == "Such video file already uploaded":
+                        count += 1
+                    else:
+                        logger.exception(error)
+                        raise error
 
         return count
 
