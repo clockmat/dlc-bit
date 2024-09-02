@@ -73,7 +73,7 @@ class WatchRSS:
 
         if not parsed.entries:
             return
-        
+
         entries = [
             entry
             for entry in parsed.entries

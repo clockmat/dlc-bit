@@ -87,10 +87,9 @@ class SonicBit(SonicBitClient):
             },
         )
 
-    def update_status(self, status: SonicBitStatus):
+    def unlock(self, status: SonicBitStatus = SonicBitStatus.IDLE):
         self.status = status
-        if status in [SonicBitStatus.DOWNLOADING, SonicBitStatus.IDLE]:
-            self.locked_by = None
+        self.locked_by = None
         self.save()
 
     def mark_as_downloading(self, download: Download, hash: str):
@@ -127,6 +126,12 @@ class SonicBit(SonicBitClient):
             with session.start_transaction():
                 self.mark_as_idle()
                 self.download.delete()
+    
+    def mark_as_timeout(self):
+        with mongo_client.start_session() as session:
+            with session.start_transaction():
+                self.mark_as_idle()
+                self.download.mark_as_timeout()
 
     def checked(self):
         self.last_checked_at = datetime.now(tz=timezone.utc)
@@ -142,7 +147,7 @@ class SonicBit(SonicBitClient):
         if self.added_at and self.added_at + timedelta(seconds=timeout) < datetime.now(
             tz=timezone.utc
         ):
-            self.reset()
+            self.mark_as_timeout()
             return True
 
         return False

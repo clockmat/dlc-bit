@@ -173,32 +173,30 @@ class SonicBitClient:
                     files_uploaded = self.file_handler.upload(download, torrent)
                     if files_uploaded:
                         sonicbit.mark_as_completed()
+                        self.hook.on_upload_complete(sonicbit, download.dict, files_uploaded)
                     else:
                         logger.info(
                             f"No files uploaded for {download.name} by {sonicbit.id}"
                         )
-                        sonicbit.update_status(SonicBitStatus.DOWNLOADING)
+                        sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                         sleep(5)
-                except SSLEOFError as error:
-                    logger.error(
-                        f"Failed to upload {download.name} to {sonicbit.id}: {error}"
-                    )
-                    sonicbit.mark_as_failed(soft=True)
                 except Exception as error:
                     logger.error(
                         f"Failed to upload {download.name} to {sonicbit.id}: {error}"
                     )
-                    sonicbit.mark_as_failed()
+                    soft = self.hook.on_upload_error(sonicbit, download, error)
+                    sonicbit.mark_as_failed(soft=soft)
             else:
                 if sonicbit.download_timeout():
                     logger.info(
                         f"Download timed out for {download.name} by {sonicbit.id}"
                     )
+                    self.hook.on_download_timeout(download)
                 else:
                     logger.debug(
                         f"Download in progress for {download.name} by {sonicbit.id} ({torrent.progress}%) ({sonicbit.time_taken})"
                     )
-                    sonicbit.update_status(SonicBitStatus.DOWNLOADING)
+                    sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                     sleep(5)
 
     def begin_download(self):
