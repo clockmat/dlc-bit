@@ -130,12 +130,11 @@ class SonicBitClient:
             return None
 
     def check_downloads(self):
-        limit = 3
         timeout_in_seconds = 8 * 60  # 8 minutes
         now = datetime.now(tz=timezone.utc)
 
         while True:
-            if limit <= 0 or datetime.now(tz=timezone.utc) - now > timedelta(
+            if datetime.now(tz=timezone.utc) - now > timedelta(
                 seconds=timeout_in_seconds
             ):
                 break
@@ -174,7 +173,6 @@ class SonicBitClient:
                     files_uploaded = self.file_handler.upload(download, torrent)
                     if files_uploaded:
                         sonicbit.mark_as_completed()
-                        limit -= 1
                     else:
                         logger.info(
                             f"No files uploaded for {download.name} by {sonicbit.id}"
