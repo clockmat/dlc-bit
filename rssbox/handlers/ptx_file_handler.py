@@ -40,7 +40,7 @@ class PTXFileHandler(FileHandler):
 
         self.REGEX_TO_REPLACE = [
             (r"(MP4-[a-zA-Z0-9]+\s\[XC\])", ""),
-            (".", " "),
+            (r"\.", " "),
             (r"\s{2,}", " "),
         ]
         self.MANUAL_UPLOAD_CHUNK_SIZE = 150 * 1024 * 1024
