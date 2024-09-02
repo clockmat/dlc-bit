@@ -50,19 +50,27 @@ class PTXFileHandler(FileHandler):
     def upload(self, download: Download, torrent: Torrent) -> int:
         # always return 1 to skip images
         count = 1
+
+        files_to_upload = []
         for torrent_file in torrent.files:
             if self.check_extension(torrent_file.extension):
-                logger.debug(
-                    f"Uploading {torrent_file.name} ({torrent_file.extension}) ({torrent_file.download_url})"
-                )
-                try:
-                    count += self.upload_file(torrent_file.download_url, download.name)
-                except Exception as error:
-                    if str(error) == "Such video file already uploaded":
-                        count += 1
-                    else:
-                        logger.exception(error)
-                        raise error
+                files_to_upload.append(torrent_file)
+
+        for torrent_file in files_to_upload:
+            logger.debug(
+                f"Uploading {torrent_file.name} ({torrent_file.extension}) ({torrent_file.download_url})"
+            )
+            try:
+                filename = download.name
+                if len(files_to_upload) > 1:
+                    filename = f"{download.name} {torrent_file.name}"
+                count += self.upload_file(torrent_file.download_url, filename)
+            except Exception as error:
+                if str(error) == "Such video file already uploaded":
+                    count += 1
+                else:
+                    logger.exception(error)
+                    raise error
 
         return count
 
@@ -214,7 +222,6 @@ class PTXFileHandler(FileHandler):
                 self.delete_filecode(filecode)
                 raise Exception(response["errors"][0]["message"])
 
-
         fields["index"] = (None, "0")
         response = self.session.post(
             self.url("/upload-video/"), params=params, files=fields
@@ -257,6 +264,8 @@ class PTXFileHandler(FileHandler):
     def sanitize_filename(self, filename: str) -> str:
         for regex in self.REGEX_TO_REMOVE:
             filename = re.sub(regex, "", filename)
+
+        filename = re.sub(r"\s{2,}", " ", filename)
         return filename.strip()
 
     def delete_filecode(self, filecode: str):
