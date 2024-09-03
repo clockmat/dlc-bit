@@ -24,7 +24,7 @@ def on_new_entries(entries: List[FeedParserDict]):
                 entry = entry_result
 
             try:
-                Download.from_entry(client=downloads, entry=entry).create()
+                Download.create(client=downloads, name=entry.title, url=entry.link)
             except Exception as e:
                 logging.error(f"Error while adding download to database: {e}")
 
