@@ -1,7 +1,6 @@
 import logging
 
 from bson.objectid import ObjectId
-from feedparser import FeedParserDict
 from pymongo.collection import Collection
 from pymongo.errors import DuplicateKeyError
 
@@ -41,21 +40,6 @@ class Download:
             "locked_by": self.locked_by,
             "retries": self.retries,
         }
-
-    def create(self):
-        try:
-            self.client.insert_one(self.dict)
-        except DuplicateKeyError:
-            logger.warning(f"Duplicate key error for download {self.id}")
-            result = self.client.find_one({"url": self.url})
-            self.id = result["_id"]
-            self.url = result["url"]
-            self.name = result["name"]
-            self.status = DownloadStatus(result["status"])
-
-            self.hash = result.get("hash")
-            self.locked_by = result.get("locked_by")
-            self.retries = result.get("retries", 0)
 
     def save(self):
         self.client.update_one({"_id": self.id}, {"$set": self.dict}, upsert=True)
@@ -99,11 +83,24 @@ class Download:
         self.client.delete_one({"_id": self.id})
 
     @staticmethod
-    def from_entry(client: Collection, entry: FeedParserDict):
-        dict = {
-            "url": entry.link,
-            "name": entry.title,
-            "status": DownloadStatus.PENDING.value,
-            "_id": ObjectId(),
+    def create(
+        client: Collection,
+        name: str,
+        url: str,
+        status: DownloadStatus = DownloadStatus.PENDING,
+    ) -> ObjectId:
+        document_id = ObjectId()
+        document = {
+            "url": url,
+            "name": name,
+            "status": status.value,
+            "_id": document_id,
         }
-        return Download(client=client, dict=dict)
+
+        try:
+            client.insert_one(document)
+            return document_id
+        except DuplicateKeyError:
+            logger.warning(f"Duplicate key error for download {name}")
+            result = client.find_one({"url": url})
+            return result["_id"]
