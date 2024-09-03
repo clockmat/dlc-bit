@@ -185,8 +185,9 @@ class SonicBitClient:
                     logger.error(
                         f"Failed to upload {download.name} to {sonicbit.id}: {error}"
                     )
-                    soft = self.hook.on_upload_error(sonicbit, download, error)
+                    soft = self.hook.on_before_upload_error(sonicbit, download, error)
                     sonicbit.mark_as_failed(soft=soft)
+                    self.hook.on_after_upload_error(sonicbit, download, error)
             else:
                 if sonicbit.download_timeout():
                     logger.info(
