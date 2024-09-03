@@ -1,7 +1,12 @@
+import logging
+
 from feedparser import FeedParserDict
 
+from rssbox.enum import DownloadStatus
 from rssbox.modules.download import Download
 from rssbox.modules.sonicbit import SonicBit
+
+logger = logging.getLogger(__name__)
 
 
 class Hook:
@@ -18,11 +23,15 @@ class Hook:
         self, sonicbit: SonicBit, download: Download
     ) -> bool:
         """Called when a download is not found in sonicbit, return `True` to continue processing, `False` to stop"""
-
-        return True
+        logger.warning(f"Removing large download {download.name}")
+        download.delete()
+        sonicbit.mark_as_idle()
+        return False
 
     def on_download_timeout(self, download: Download):
         """Called when a download times out"""
+        logger.warning(f"Removing timed out download {download.name}")
+        download.delete()
 
     def on_before_upload_error(
         self, sonicbit: SonicBit, download: Download, error: Exception
@@ -34,6 +43,9 @@ class Hook:
         self, sonicbit: SonicBit, download: Download, error: Exception
     ):
         """Called after an upload fails"""
+        if download.status == DownloadStatus.ERROR:
+            logger.warning(f"Removing failed download {download.name}")
+            download.delete()
 
     def on_upload_complete(
         self, sonicbit: SonicBit, download_dict: dict, files_uploaded: int
