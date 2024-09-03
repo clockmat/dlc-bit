@@ -39,7 +39,8 @@ class PTXFileHandler(FileHandler):
         )
 
         self.REGEX_TO_REPLACE = [
-            (r"(MP4-[a-zA-Z0-9]+\s*\[XC\])", ""),
+            (r"(MP4-[a-zA-Z0-9]+\s*)", ""),
+            (r"\[XC\]", ""),
             (r"\.", " "),
             (r"\s{2,}", " "),
         ]

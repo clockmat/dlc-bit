@@ -6,14 +6,14 @@ from feedparser import FeedParserDict
 from rssbox import accounts, downloads, scheduler, watchrss_database, workers
 from rssbox.config import Config
 from rssbox.handlers.ptx_file_handler import PTXFileHandler
-from rssbox.hooks.hook import Hook
+from rssbox.hooks.ptx_hook import PTXHook
 from rssbox.modules.download import Download
 from rssbox.modules.watchrss import WatchRSS
 from rssbox.sonicbit_client import SonicBitClient
 from rssbox.utils import clean_empty_dirs
 
 logger = logging.getLogger(__name__)
-hook = Hook()
+hook = PTXHook()
 
 
 def on_new_entries(entries: List[FeedParserDict]):
