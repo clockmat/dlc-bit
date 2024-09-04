@@ -8,10 +8,17 @@ logger = logging.getLogger(__name__)
 
 
 class Heartbeat:
-    def __init__(self, id: str, client: Collection, scheduler: BackgroundScheduler):
+    def __init__(
+        self,
+        id: str,
+        client: Collection,
+        scheduler: BackgroundScheduler,
+        interval: int = 30,
+    ):
         self.id = id
         self.client = client
         self.scheduler = scheduler
+        self.HEARTBEAT_INTERVAL = interval
 
     def start_heartbeat(self):
         logger.debug(f"Starting heartbeat for {self.id}")
@@ -19,9 +26,10 @@ class Heartbeat:
         self.scheduler.add_job(
             self.heartbeat,
             "interval",
-            seconds=30,
+            seconds=self.HEARTBEAT_INTERVAL,
             id=self.heartbeat_id,
             max_instances=1,
+            misfire_grace_time=self.HEARTBEAT_INTERVAL,
         )
 
     def stop_heartbeat(self):
