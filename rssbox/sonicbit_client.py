@@ -43,12 +43,19 @@ class SonicBitClient:
         self.scheduler = scheduler
         self.file_handler = file_handler
         self.hook = hook
+        self.HEARTBEAT_INTERVAL = 30
 
         logger.info(f"Initializing SonicBitClient with ID: {self.id}")
 
-        self.heartbeat = Heartbeat(self.id, self.workers, self.scheduler)
+        self.heartbeat = Heartbeat(
+            self.id, self.workers, self.scheduler, self.HEARTBEAT_INTERVAL
+        )
         self.worker_handler = WorkerHandler(
-            self.workers, self.accounts, self.downloads, self.scheduler
+            self.workers,
+            self.accounts,
+            self.downloads,
+            self.scheduler,
+            self.HEARTBEAT_INTERVAL,
         )
 
         self.worker_handler.clean_stale_sonicbit_and_workers()
@@ -152,7 +159,7 @@ class SonicBitClient:
                 continue
             if not download.hash:
                 logger.info(
-                    f"SonicBit downloaded but no download hash found for {sonicbit.download_id} ({sonicbit.id})"
+                    f"SonicBit downloaded but no download ID found for {sonicbit.download_id} ({sonicbit.id})"
                 )
                 sonicbit.reset()
                 continue
@@ -202,7 +209,15 @@ class SonicBitClient:
                     sleep(5)
 
     def begin_download(self):
+        timeout_in_seconds = 2 * 60  # 2 minutes
+        now = datetime.now(tz=timezone.utc)
+
         while True:
+            if datetime.now(tz=timezone.utc) - now > timedelta(
+                seconds=timeout_in_seconds
+            ):
+                break
+
             download = self.get_pending_download()
             if not download:
                 break

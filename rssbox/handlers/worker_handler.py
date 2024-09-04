@@ -16,11 +16,13 @@ class WorkerHandler:
         accounts: Collection,
         downloads: Collection,
         scheduler: BackgroundScheduler,
+        heartbeat_interval: int,
     ):
         self.workers = workers
         self.accounts = accounts
         self.downloads = downloads
         self.scheduler = scheduler
+        self.HEARTBEAT_INTERVAL = heartbeat_interval
 
     def start(self):
         self.scheduler.add_job(
@@ -32,7 +34,7 @@ class WorkerHandler:
             "Unlocking idle or stale workers, sonicbit accounts, and downloads"
         )
 
-        timeout_period = timedelta(seconds=40)
+        timeout_period = timedelta(seconds=self.HEARTBEAT_INTERVAL * 2)
         current_time = datetime.now(tz=timezone.utc)
         timeout_threshold = current_time - timeout_period
 

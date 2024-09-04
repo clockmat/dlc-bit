@@ -154,16 +154,14 @@ class SonicBit(SonicBitClient):
 
     def get_download(self) -> Download | None:
         if self.download_id:
-            raw_download = downloads.find_one({"_id": self.download_id})
-            if raw_download:
-                return Download(downloads, raw_download)
+            if raw_download := downloads.find_one({"_id": self.download_id}):
+                self.__download = Download(downloads, raw_download)
+                return self.__download
         return None
 
     @property
     def download(self) -> Download | None:
-        if not self.__download:
-            self.__download = self.get_download()
-        return self.__download
+        return self.__download or self.get_download()
 
     @property
     def time_taken(self):
