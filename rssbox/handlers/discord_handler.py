@@ -40,9 +40,9 @@ class DiscordHandler(logging.Handler):
 
         formatted_message = self.format(record)
         message = (
-            f">>> ```{formatted_message}```"
+            f"```{formatted_message}```"
             if record.exc_info
-            else f"> ```{record.levelname}: {formatted_message}```"
+            else f"```{record.levelname}: {formatted_message}```"
         )
         try:
             self.session.post(
