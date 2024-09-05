@@ -1,5 +1,4 @@
 import logging
-import re
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
@@ -11,6 +10,7 @@ from rssbox.config import Config
 from rssbox.enum import SonicBitStatus
 from rssbox.modules.download import Download
 from rssbox.modules.token_handler import TokenHandler
+from rssbox.utils import calulate_torrent_hash
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,4 @@ class SonicBit(SonicBitClient):
         return self.time_taken
 
     def get_torrent_hash(self, uri: str) -> str | None:
-        if uri.startswith("magnet:"):
-            return re.search(r"xt=urn:btih:([a-zA-Z0-9]+)", uri).group(1).upper()
-        else:
-            raise NotImplementedError("Only magnet links are supported")
+        return calulate_torrent_hash(uri).upper()
