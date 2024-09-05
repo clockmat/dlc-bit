@@ -39,8 +39,11 @@ class PTXFileHandler(FileHandler):
         )
 
         self.REGEX_TO_REPLACE = [
+            # remove uploader tags
             (r"(MP4-[a-zA-Z0-9]+\s*)", ""),
             (r"\[XC\]", ""),
+            (r"HEVC\.x265\.PRT", ""),
+            # basic escaping
             (r"\.", " "),
             (r"\s{2,}", " "),
         ]
