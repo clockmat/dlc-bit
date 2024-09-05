@@ -1,7 +1,6 @@
 import logging
 import os
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from bson.codec_options import CodecOptions
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -21,7 +20,7 @@ if os.path.exists(Config.LOG_FILE):
 
 
 logging.basicConfig(
-    level=Config.LOG_LEVEL,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
@@ -50,6 +49,3 @@ downloads.create_index([("url", 1)], unique=True)
 
 watchrss_database = mongo.get_collection("watchrss", codec_options=options)
 workers = mongo.get_collection("workers", codec_options=options)
-
-scheduler = BackgroundScheduler(timezone="UTC")
-scheduler.start()
