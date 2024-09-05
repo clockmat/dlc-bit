@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 import math
 import os
 import re
@@ -10,6 +11,7 @@ from requests import Session
 from sonicbit.types import Torrent
 
 from rssbox.config import Config
+from rssbox.handlers.discord_handler import DiscordHandler
 from rssbox.handlers.file_handler import FileHandler
 from rssbox.modules.download import Download
 from rssbox.utils import delete_file
@@ -52,6 +54,10 @@ class PTXFileHandler(FileHandler):
         if os.path.exists(Config.DOWNLOAD_PATH):
             delete_file(Config.DOWNLOAD_PATH)
             os.makedirs(Config.DOWNLOAD_PATH)
+
+        if discord_logger_url := os.environ.get("DISCORD_LOGGER_WEBHOOK_URL"):
+            root_logger = logging.getLogger()
+            root_logger.addHandler(DiscordHandler(discord_logger_url, logging.DEBUG))
 
     def url(self, path: str) -> str:
         return f"{self.__base_url}{path}"
