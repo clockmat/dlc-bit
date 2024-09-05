@@ -101,6 +101,6 @@ class Download:
             client.insert_one(document)
             return document_id
         except DuplicateKeyError:
-            logger.warning(f"Duplicate key for download: {name}")
+            logger.debug(f"Duplicate key for download: {name}")
             result = client.find_one({"url": url})
             return result["_id"]
