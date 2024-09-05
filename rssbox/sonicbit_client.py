@@ -70,10 +70,14 @@ class SonicBitClient:
         with self.heartbeat:
             if download_only or process_only:
                 logger.debug("Starting download checks and scheduler")
-                self.begin_download()  # First download
+                self.start_downloads()  # First download
                 if not download_only:
                     self.scheduler.add_job(
-                        self.begin_download, "interval", seconds=30, id="begin_download"
+                        self.start_downloads,
+                        "interval",
+                        minutes=3,
+                        id="start_downloads",
+                        max_instances=5,
                     )
 
             if upload_only or process_only:
@@ -81,7 +85,7 @@ class SonicBitClient:
                 self.check_downloads()
 
             if download_only or process_only:
-                self.begin_download()
+                self.start_downloads()
 
     def get_sonicbit(self, account: dict) -> SonicBit:
         return SonicBit(client=self.accounts, account=account)
@@ -222,7 +226,7 @@ class SonicBitClient:
                     sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                     sleep(5)
 
-    def begin_download(self):
+    def start_downloads(self):
         timeout_in_seconds = 2 * 60  # 2 minutes
         now = datetime.now(tz=timezone.utc)
 
