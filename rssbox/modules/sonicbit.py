@@ -67,8 +67,8 @@ class SonicBit(SonicBitClient):
 
         try:
             if download_url == download.url:
-                self.verify_download()
                 hash = self.get_torrent_hash(download.url)
+                self.verify_download(hash)
                 self.mark_as_downloading(download, hash=hash)
             else:
                 raise Exception("Download URL does not match")
@@ -163,24 +163,17 @@ class SonicBit(SonicBitClient):
                 return self.__download
         return None
 
-    def verify_download(self, timeout: int = 30) -> bool:
-        logger.debug(f"Verifying download {self.download_id}")
-
-        if not self.download:
-            raise Exception(
-                f"Unable to verify download {self.download_id}, download not found"
-            )
+    def verify_download(self, hash: str, timeout: int = 30) -> bool:
+        logger.debug(f"Verifying download {hash}")
 
         now = datetime.now(tz=timezone.utc)
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(seconds=timeout):
-                raise Exception(
-                    f"Verify download timed out for download {self.download_id}"
-                )
+                raise Exception(f"Verify download timed out for download hash: {hash}")
 
             torrents = self.list_torrents()
             for download_hash in torrents.torrents.keys():
-                if self.download.hash == download_hash:
+                if hash == download_hash:
                     return True
             sleep(1)
 
