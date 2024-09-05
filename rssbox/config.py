@@ -1,5 +1,4 @@
 import os
-from sys import argv
 
 from dotenv import load_dotenv
 
@@ -7,7 +6,9 @@ load_dotenv()
 
 
 class Config:
-    RSS_URL = os.environ["RSS_URL"]
+    RSS_URL_RAW = os.environ["RSS_URL"]
+    RSS_URLS = list(map(lambda x: x.strip(), RSS_URL_RAW.split("|")))
+
     MONGO_URL = os.environ["MONGO_URL"]
     MONGO_DATABASE = os.environ.get("MONGO_DATABASE")
 
@@ -27,12 +28,6 @@ class Config:
     DOWNLOAD_PATH = os.path.abspath(DOWNLOAD_PATH)
 
     LOG_FILE = os.environ.get("LOG_FILE", "rssbox.log")
-    DEBUG = (
-        "--debug" in argv
-        or "--verbose" in argv
-        or os.environ.get("LOG_LEVEL", "INFO").upper() == "DEBUG"
-    )
-    LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
 
     DOWNLOAD_TIMEOUT = int(os.environ.get("DOWNLOAD_TIMEOUT", 60 * 60 * 2.5))
     DOWNLOAD_RETRIES = int(os.environ.get("DOWNLOAD_RETRIES", 5))

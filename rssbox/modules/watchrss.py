@@ -80,7 +80,7 @@ class WatchRSS:
             if self.struct_to_datetime(entry.published_parsed) > self.last_saved_on
         ]
 
-        logger.debug("There are {} new entries".format(len(entries)))
+        logger.debug(f"There are {len(entries)} new entries for {self.url}")
         last_saved_on = self.struct_to_datetime(parsed.entries[0].published_parsed)
 
         if not entries:

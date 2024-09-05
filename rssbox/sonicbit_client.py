@@ -35,8 +35,9 @@ class SonicBitClient:
         scheduler: BackgroundScheduler,
         file_handler: FileHandler,
         hook: Hook,
+        id: str = None,
     ):
-        self.id = nanoid.generate(alphabet="1234567890abcdef")
+        self.id = id or nanoid.generate(alphabet="1234567890abcdef")
         self.accounts = accounts
         self.downloads = downloads
         self.workers = workers
@@ -45,7 +46,7 @@ class SonicBitClient:
         self.hook = hook
         self.HEARTBEAT_INTERVAL = 30
 
-        logger.info(f"Initializing SonicBitClient with ID: {self.id}")
+        logger.info(f"Initializing {type(self).__name__} with ID: {self.id}")
 
         self.heartbeat = Heartbeat(
             self.id, self.workers, self.scheduler, self.HEARTBEAT_INTERVAL
@@ -60,14 +61,27 @@ class SonicBitClient:
 
         self.worker_handler.clean_stale_sonicbit_and_workers()
 
-    def start(self):
+    def start(
+        self,
+        download_only: bool = True,
+        upload_only: bool = True,
+        process_only: bool = True,
+    ):
         with self.heartbeat:
-            self.begin_download()  # First download
-            self.scheduler.add_job(
-                self.begin_download, "interval", seconds=30, id="begin_download"
-            )
-            self.check_downloads()
-            self.begin_download()
+            if download_only or process_only:
+                logger.debug("Starting download checks and scheduler")
+                self.begin_download()  # First download
+                if not download_only:
+                    self.scheduler.add_job(
+                        self.begin_download, "interval", seconds=30, id="begin_download"
+                    )
+
+            if upload_only or process_only:
+                logger.debug("Starting upload checks")
+                self.check_downloads()
+
+            if download_only or process_only:
+                self.begin_download()
 
     def get_sonicbit(self, account: dict) -> SonicBit:
         return SonicBit(client=self.accounts, account=account)

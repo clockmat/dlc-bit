@@ -6,3 +6,4 @@ pymongo
 nanoid
 apscheduler
 humanize
+click
