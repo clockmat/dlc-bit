@@ -57,7 +57,7 @@ class PTXFileHandler(FileHandler):
 
         if discord_logger_url := os.environ.get("DISCORD_LOGGER_WEBHOOK_URL"):
             root_logger = logging.getLogger()
-            root_logger.addHandler(DiscordHandler(discord_logger_url, logging.DEBUG))
+            root_logger.addHandler(DiscordHandler(discord_logger_url, logging.WARNING))
 
     def url(self, path: str) -> str:
         return f"{self.__base_url}{path}"
