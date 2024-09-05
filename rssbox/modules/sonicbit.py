@@ -65,12 +65,16 @@ class SonicBit(SonicBitClient):
             self.mark_as_idle()
             raise error
 
-        if download_url == download.url:
-            hash = self.get_torrent_hash(download.url)
-            self.mark_as_downloading(download, hash=hash)
-        else:
+        try:
+            if download_url == download.url:
+                self.verify_download()
+                hash = self.get_torrent_hash(download.url)
+                self.mark_as_downloading(download, hash=hash)
+            else:
+                raise Exception("Download URL does not match")
+        except Exception as error:
             self.mark_as_idle()
-            raise Exception("Download URL does not match")
+            raise error
 
     def save(self):
         self.client.update_one(
@@ -158,6 +162,27 @@ class SonicBit(SonicBitClient):
                 self.__download = Download(downloads, raw_download)
                 return self.__download
         return None
+
+    def verify_download(self, timeout: int = 30) -> bool:
+        logger.debug(f"Verifying download {self.download_id}")
+
+        if not self.download:
+            raise Exception(
+                f"Unable to verify download {self.download_id}, download not found"
+            )
+
+        now = datetime.now(tz=timezone.utc)
+        while True:
+            if datetime.now(tz=timezone.utc) - now > timedelta(seconds=timeout):
+                raise Exception(
+                    f"Verify download timed out for download {self.download_id}"
+                )
+
+            torrents = self.list_torrents()
+            for download_hash in torrents.torrents.keys():
+                if self.download.hash == download_hash:
+                    return True
+            sleep(1)
 
     @property
     def download(self) -> Download | None:
