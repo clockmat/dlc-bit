@@ -1,6 +1,10 @@
 import hashlib
 import os
+import re
 import shutil
+
+import bencodepy
+import requests
 
 
 def delete_file(*files):
@@ -28,3 +32,15 @@ def clean_empty_dirs(path):
             file_path = os.path.join(root, name)
             if os.path.getsize(file_path) == 0:
                 os.remove(file_path)
+
+
+def calulate_torrent_hash(uri: str) -> str | None:
+    if uri.startswith("magnet:"):
+        return re.search(r"xt=urn:btih:([a-zA-Z0-9]+)", uri).group(1)
+    elif uri.startswith("http"):
+        torrent_file = requests.get(uri).content
+        decoded_torrent = bencodepy.decode(torrent_file)
+        torrent_info = bencodepy.encode(decoded_torrent[b"info"])
+        return hashlib.sha1(torrent_info).hexdigest()
+    else:
+        raise NotImplementedError(f"Unsupported URI: {uri}")
