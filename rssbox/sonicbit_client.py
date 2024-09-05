@@ -170,14 +170,14 @@ class SonicBitClient:
             download = sonicbit.download
 
             if not download:
-                logger.info(
+                logger.warning(
                     f"SonicBit downloaded but no download found for {sonicbit.download_id} ({sonicbit.id})"
                 )
                 sonicbit.mark_as_idle()
                 continue
             if not download.hash:
-                logger.info(
-                    f"SonicBit downloaded but no download ID found for {sonicbit.download_id} ({sonicbit.id})"
+                logger.warning(
+                    f"SonicBit downloaded but no download's hash not found for {sonicbit.download_id} ({sonicbit.id})"
                 )
                 sonicbit.reset()
                 continue
@@ -185,7 +185,9 @@ class SonicBitClient:
             torrent_list = sonicbit.list_torrents()
             torrent = torrent_list.torrents.get(download.hash)
             if not torrent:
-                logger.info(f"Torrent not found for {download.name} by {sonicbit.id}")
+                logger.warning(
+                    f"Torrent not found for {download.name} by {sonicbit.id}"
+                )
                 if self.hook.on_sonicbit_download_not_found(sonicbit, download):
                     sonicbit.reset()
                 continue
@@ -201,7 +203,7 @@ class SonicBitClient:
                             sonicbit, download.dict, files_uploaded
                         )
                     else:
-                        logger.info(
+                        logger.warning(
                             f"No files uploaded for {download.name} by {sonicbit.id}"
                         )
                         sonicbit.unlock(SonicBitStatus.DOWNLOADING)
@@ -215,7 +217,7 @@ class SonicBitClient:
                     self.hook.on_after_upload_error(sonicbit, download, error)
             else:
                 if sonicbit.download_timeout():
-                    logger.info(
+                    logger.warning(
                         f"Download timed out for {download.name} by {sonicbit.id}"
                     )
                     self.hook.on_download_timeout(download)
