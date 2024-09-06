@@ -104,8 +104,8 @@ class SonicBit(SonicBitClient):
 
         with mongo_client.start_session() as session:
             with session.start_transaction():
-                self.save()
                 self.download.mark_as_processing(hash=hash)
+                self.save()
 
     def mark_as_idle(self):
         self.status = SonicBitStatus.IDLE
