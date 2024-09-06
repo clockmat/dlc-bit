@@ -8,3 +8,4 @@ apscheduler
 humanize
 click
 bencode.py
+translators
