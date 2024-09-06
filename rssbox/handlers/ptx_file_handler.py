@@ -45,6 +45,7 @@ class PTXFileHandler(FileHandler):
             (r"(MP4-[a-zA-Z0-9]+\s*)", ""),
             (r"\[XC\]", ""),
             (r"HEVC\.x265\.PRT", ""),
+            (r"(\.com|\.mp4|@)", " "),
             # basic escaping
             (r"\.", " "),
             (r"\s{2,}", " "),
