@@ -16,6 +16,7 @@ class PTXHook(Hook):
             f"Removing large download {download.name} from sonicbit {sonicbit.id}"
         )
         download.delete()
+        sonicbit.mark_as_idle()
         return False
 
     def on_download_timeout(self, download: Download):
