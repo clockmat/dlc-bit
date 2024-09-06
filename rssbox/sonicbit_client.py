@@ -171,13 +171,13 @@ class SonicBitClient:
 
             if not download:
                 logger.warning(
-                    f"SonicBit downloaded but no download found for {sonicbit.download_id} ({sonicbit.id})"
+                    f"SonicBit downloading but no download found for {sonicbit.download_id} ({sonicbit.id})"
                 )
                 sonicbit.mark_as_idle()
                 continue
             if not download.hash:
                 logger.warning(
-                    f"SonicBit downloaded but no download's hash not found for {sonicbit.download_id} ({sonicbit.id})"
+                    f"SonicBit downloading but no download's hash found for {sonicbit.download_id} ({sonicbit.id})"
                 )
                 sonicbit.reset()
                 continue
