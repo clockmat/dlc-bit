@@ -21,7 +21,7 @@ class PTXHook(Hook):
         self, sonicbit: SonicBit, download: Download
     ) -> bool:
         logger.warning(
-            f"Removing large download {download.name} from sonicbit {sonicbit.id}"
+            f"Removing large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken}"
         )
         download.delete()
         sonicbit.mark_as_idle()
