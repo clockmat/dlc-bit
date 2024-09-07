@@ -53,8 +53,8 @@ class SonicBit(SonicBitClient):
         torrent_list = self.list_torrents()
         for torrent in torrent_list.torrents.values():
             torrent.delete(with_file=True)
-        # wait for purge to complete
-        sleep(3)
+        # clear storage
+        self.clear_storage()
 
     def add_download(self, download: Download):
         self.purge()
