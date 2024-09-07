@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pymongo import ReturnDocument
 from pymongo.collection import Collection
 
+from rssbox.config import Config
 from rssbox.enum import DownloadStatus, SonicBitStatus
 from rssbox.handlers.file_handler import FileHandler
 from rssbox.handlers.worker_handler import WorkerHandler
@@ -160,12 +161,11 @@ class SonicBitClient:
             return None
 
     def check_downloads(self):
-        timeout_in_seconds = 8 * 60  # 8 minutes
         now = datetime.now(tz=timezone.utc)
 
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(
-                seconds=timeout_in_seconds
+                seconds=Config.DOWNLOAD_CHECK_TIMEOUT
             ):
                 break
 
@@ -235,12 +235,11 @@ class SonicBitClient:
                     sleep(5)
 
     def start_downloads(self):
-        timeout_in_seconds = 2 * 60  # 2 minutes
         now = datetime.now(tz=timezone.utc)
 
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(
-                seconds=timeout_in_seconds
+                seconds=Config.DOWNLOAD_START_TIMEOUT
             ):
                 break
 
