@@ -169,7 +169,9 @@ class SonicBit(SonicBitClient):
                 return self.__download
         return None
 
-    def verify_download(self, hash: str, timeout: int = 8) -> bool:
+    def verify_download(
+        self, hash: str, timeout: int = Config.DOWNLOAD_ADD_VERIFY_TIMEOUT
+    ) -> bool:
         logger.debug(f"Verifying download {hash}")
 
         now = datetime.now(tz=timezone.utc)
