@@ -45,7 +45,8 @@ class PTXFileHandler(FileHandler):
             (r"(MP4-[a-zA-Z0-9]+\s*)", ""),
             (r"\[XC\]", ""),
             (r"HEVC\.x265\.PRT", ""),
-            (r"(\.com|\.mp4|@|\+|\[F?HD(\/\d+p)?\]|\[4K\])", " "),
+            # https://regex101.com/r/0o6zAD
+            (r"(\.com|\.mp4|@|\+|\[(F?HD|4K)(\/\d+p)?\])", " "),
             # basic escaping
             (r"\.", " "),
             (r"\s{2,}", " "),
