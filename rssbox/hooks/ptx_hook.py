@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from feedparser import FeedParserDict
 from translators import translate_text
@@ -20,12 +21,14 @@ class PTXHook(Hook):
     def on_sonicbit_download_not_found(
         self, sonicbit: SonicBit, download: Download
     ) -> bool:
-        logger.warning(
-            f"Removing large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken}"
-        )
-        download.delete()
-        sonicbit.mark_as_idle()
-        return False
+        if sonicbit.time_taken < timedelta(hours=3):
+            logger.warning(
+                f"Removing large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken_str}"
+            )
+            download.delete()
+            sonicbit.mark_as_idle()
+            return False
+        return True
 
     def on_download_timeout(self, download: Download):
         logger.warning(f"Removing timed out download {download.name}")
