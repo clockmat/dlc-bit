@@ -65,16 +65,24 @@ class SonicBit(SonicBitClient):
             self.mark_as_idle()
             raise error
 
+        if download_url == download.url:
+            hash = self.get_torrent_hash(download.url)
+            self.verify_download(hash)
+            self.mark_as_downloading(download, hash=hash)
+        else:
+            raise Exception("Download URL does not match")
+
+    def add_download_with_retries(self, download: Download, retries: int = 3):
         try:
-            if download_url == download.url:
-                hash = self.get_torrent_hash(download.url)
-                self.verify_download(hash)
-                self.mark_as_downloading(download, hash=hash)
-            else:
-                raise Exception("Download URL does not match")
+            self.add_download(download)
         except Exception as error:
-            self.mark_as_idle()
-            raise error
+            if retries > 0:
+                logger.info(
+                    f"Retry adding download {download.name} after error: {error}"
+                )
+                self.add_download_with_retries(download, retries - 1)
+            else:
+                raise error
 
     def save(self):
         self.client.update_one(
@@ -163,7 +171,7 @@ class SonicBit(SonicBitClient):
                 return self.__download
         return None
 
-    def verify_download(self, hash: str, timeout: int = 30) -> bool:
+    def verify_download(self, hash: str, timeout: int = 8) -> bool:
         logger.debug(f"Verifying download {hash}")
 
         now = datetime.now(tz=timezone.utc)
