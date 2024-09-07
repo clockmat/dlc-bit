@@ -186,7 +186,7 @@ class SonicBitClient:
             torrent = torrent_list.torrents.get(download.hash)
             if not torrent:
                 logger.warning(
-                    f"Torrent not found for {download.name} by {sonicbit.id}"
+                    f"Torrent not found for {download.name} by {sonicbit.id} after {sonicbit.time_taken_str}"
                 )
                 if self.hook.on_sonicbit_download_not_found(sonicbit, download):
                     sonicbit.reset()
