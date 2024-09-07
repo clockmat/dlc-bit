@@ -46,7 +46,13 @@ class PTXFileHandler(FileHandler):
             (r"\[XC\]", ""),
             (r"HEVC\.x265\.PRT", ""),
             # https://regex101.com/r/0o6zAD
-            (r"(\.com|\.mp4|@|\+|\[(F?HD|4K)(\/\d{3,4}p)?\]|\d{3,4}p)", " "),
+            (r"(\.com|@|\+|\[(F?HD|4K)(\/\d{3,4}p)?\]|\d{3,4}p)", " "),
+            # remove file extension
+            # https://regex101.com/r/umqxGf
+            (
+                r"(\.(mp4|flv|3gp|mov|asf|mpg|avi|mpeg|wmv|rm|dat|mkv|vob|m2v|f4v|m4v|m2t|mts|webm|ts))$",
+                "",
+            ),
             # basic escaping
             (r"\.", " "),
             (r"\s{2,}", " "),
