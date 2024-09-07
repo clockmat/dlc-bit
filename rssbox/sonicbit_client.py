@@ -97,10 +97,16 @@ class SonicBitClient:
                     {"status": SonicBitStatus.IDLE.value},
                     {"status": {"$exists": False}},
                     {"status": ""},
-                ]
+                ],
             },
-            {"$set": {"status": SonicBitStatus.PROCESSING.value, "locked_by": self.id}},
-            sort=[("priority", -1)],
+            {
+                "$set": {
+                    "status": SonicBitStatus.PROCESSING.value,
+                    "locked_by": self.id,
+                    "last_used_at": datetime.now(tz=timezone.utc),
+                }
+            },
+            sort=[("priority", -1), ("last_used_at", 1)],
             return_document=ReturnDocument.AFTER,
         )
         if not result:

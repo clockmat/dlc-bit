@@ -23,6 +23,7 @@ class SonicBit(SonicBitClient):
     download_id: str | None
     locked_by: str | None
     last_checked_at: datetime | None
+    last_used_at: datetime | None
 
     def __init__(self, client: Collection, account: dict):
         self.client = client
@@ -33,6 +34,7 @@ class SonicBit(SonicBitClient):
         self.locked_by = account.get("locked_by", None)
         self.priority = account.get("priority", 0)
         self.last_checked_at = account.get("last_checked_at", None)
+        self.last_used_at = account.get("last_used_at", None)
         self.__download = None
 
         super().__init__(
