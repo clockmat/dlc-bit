@@ -50,7 +50,7 @@ class PTXFileHandler(FileHandler):
             (r"\.", " "),
             (r"\s{2,}", " "),
         ]
-        self.MANUAL_UPLOAD_CHUNK_SIZE = 150 * 1024 * 1024
+        self.MANUAL_UPLOAD_CHUNK_SIZE = 130 * 1024 * 1024
 
         if os.path.exists(Config.DOWNLOAD_PATH):
             delete_file(Config.DOWNLOAD_PATH)
