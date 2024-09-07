@@ -28,6 +28,9 @@ class PTXHook(Hook):
             download.delete()
         else:
             download.mark_as_failed()
+            self.on_after_upload_error(
+                sonicbit, download, Exception("Download not found")
+            )
 
         sonicbit.mark_as_idle()
         return False
