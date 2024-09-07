@@ -61,11 +61,7 @@ class SonicBit(SonicBitClient):
     def add_download(self, download: Download):
         self.purge()
 
-        try:
-            [download_url] = self.add_torrent(uri=download.url)
-        except Exception as error:
-            self.mark_as_idle()
-            raise error
+        [download_url] = self.add_torrent(uri=download.url)
 
         if download_url == download.url:
             hash = self.get_torrent_hash(download.url)
