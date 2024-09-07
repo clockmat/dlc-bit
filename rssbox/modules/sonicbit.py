@@ -190,13 +190,17 @@ class SonicBit(SonicBitClient):
         return self.__download or self.get_download()
 
     @property
-    def time_taken(self):
+    def time_taken(self) -> timedelta:
         if self.added_at:
-            return str(datetime.now(tz=timezone.utc) - self.added_at).split(".", 2)[0]
+            return datetime.now(tz=timezone.utc) - self.added_at
 
         self.added_at = datetime.now(tz=timezone.utc)
         self.save()
         return self.time_taken
+
+    @property
+    def time_taken_str(self) -> str:
+        return str(self.time_taken).split(".", 2)[0]
 
     def get_torrent_hash(self, uri: str) -> str | None:
         return calulate_torrent_hash(uri).upper()

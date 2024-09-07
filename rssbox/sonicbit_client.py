@@ -223,7 +223,7 @@ class SonicBitClient:
                     self.hook.on_download_timeout(download)
                 else:
                     logger.debug(
-                        f"Download in progress for {download.name} by {sonicbit.id} ({torrent.progress}%) ({sonicbit.time_taken})"
+                        f"Download in progress for {download.name} by {sonicbit.id} ({torrent.progress}%) ({sonicbit.time_taken_str})"
                     )
                     sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                     sleep(5)
