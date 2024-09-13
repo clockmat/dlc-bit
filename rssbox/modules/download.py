@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta, timezone
 
 from bson.objectid import ObjectId
 from pymongo.collection import Collection
@@ -18,6 +19,7 @@ class Download:
     hash: str | None
     locked_by: str | None
     retries: int
+    expire_at: datetime | None
 
     def __init__(self, client: Collection, dict: dict):
         self.client = client
@@ -29,6 +31,7 @@ class Download:
         self.hash = dict.get("hash")
         self.locked_by = dict.get("locked_by")
         self.retries = dict.get("retries", 0)
+        self.expire_at = dict.get("expire_at")
 
     @property
     def dict(self):
@@ -65,6 +68,9 @@ class Download:
             self.status = DownloadStatus.ERROR
             self.hash = None
             self.locked_by = None
+            self.expire_at = datetime.now(timezone.utc) + timedelta(
+                seconds=Config.DOWNLOAD_ERROR_RECORD_EXPIRY
+            )
             self.save()
         else:
             self.mark_as_pending()
@@ -73,6 +79,9 @@ class Download:
         self.status = DownloadStatus.TIMEOUT
         self.hash = None
         self.locked_by = None
+        self.expire_at = datetime.now(timezone.utc) + timedelta(
+            seconds=Config.DOWNLOAD_TIMEOUT_RECORD_EXPIRY
+        )
         self.save()
 
     def unlock(self):

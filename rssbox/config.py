@@ -47,3 +47,9 @@ class Config:
     DOWNLOAD_START_TIMEOUT = int(
         os.environ.get("DOWNLOAD_START_TIMEOUT", 2 * 60)
     )  # 2 minutes
+    DOWNLOAD_ERROR_RECORD_EXPIRY = int(
+        os.environ.get("DOWNLOAD_ERROR_EXPIRE_RECORD", 60 * 60 * 24 * 7)
+    )  # 7 days
+    DOWNLOAD_TIMEOUT_RECORD_EXPIRY = int(
+        os.environ.get("DOWNLOAD_TIMEOUT_EXPIRE_RECORD", 60 * 60 * 24 * 7)
+    )  # 7 days
