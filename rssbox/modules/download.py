@@ -42,6 +42,7 @@ class Download:
             "hash": self.hash,
             "locked_by": self.locked_by,
             "retries": self.retries,
+            "expire_at": self.expire_at,
         }
 
     def save(self):

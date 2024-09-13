@@ -44,10 +44,10 @@ else:
 accounts = mongo.get_collection("accounts", codec_options=options)
 
 downloads = mongo.get_collection("downloads", codec_options=options)
+# download url should be unique
 downloads.create_index([("url", 1)], unique=True)
-downloads.create_index(
-    [("expire_at", 1)], expireAfterSeconds=0
-)  # expire at "expire_at" field
+# expire at "expire_at" field
+downloads.create_index([("expire_at", 1)], expireAfterSeconds=0)
 
 watchrss_database = mongo.get_collection("watchrss", codec_options=options)
 workers = mongo.get_collection("workers", codec_options=options)
