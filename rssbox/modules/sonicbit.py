@@ -30,12 +30,13 @@ class SonicBit(SonicBitClient):
         self.client = client
         self.id = account["_id"]
         self.status = SonicBitStatus(account.get("status", SonicBitStatus.IDLE.value))
-        self.added_at = account.get("added_at", None)
-        self.download_id = account.get("download_id", None)
-        self.locked_by = account.get("locked_by", None)
+        self.added_at = account.get("added_at")
+        self.download_id = account.get("download_id")
+        self.locked_by = account.get("locked_by")
         self.priority = account.get("priority", 0)
-        self.last_checked_at = account.get("last_checked_at", None)
-        self.last_used_at = account.get("last_used_at", None)
+        self.last_checked_at = account.get("last_checked_at")
+        self.last_used_at = account.get("last_used_at")
+
         self.__download = None
 
         super().__init__(
