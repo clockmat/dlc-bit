@@ -75,7 +75,7 @@ class SonicBit(SonicBitClient):
             self.add_download(download)
         except Exception as error:
             if retries > 0:
-                logger.info(
+                logger.exception(
                     f"Retry adding download {download.name} after error: {error}"
                 )
                 self.add_download_with_retries(download, retries - 1)
