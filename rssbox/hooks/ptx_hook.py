@@ -4,7 +4,6 @@ from datetime import timedelta
 from feedparser import FeedParserDict
 from translators import translate_text
 
-from rssbox.enum import DownloadStatus
 from rssbox.hooks.hook import Hook
 from rssbox.modules.download import Download
 from rssbox.modules.sonicbit import SonicBit
@@ -34,15 +33,3 @@ class PTXHook(Hook):
 
         sonicbit.mark_as_idle()
         return False
-
-    def on_download_timeout(self, download: Download):
-        logger.warning(f"Removing timed out download {download.name}")
-        download.delete()
-
-    def on_after_upload_error(
-        self, sonicbit: SonicBit, download: Download, error: Exception
-    ):
-        """Called after an upload fails"""
-        if download.status == DownloadStatus.ERROR:
-            logger.warning(f"Removing failed download {download.name}")
-            download.delete()
