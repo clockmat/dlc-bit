@@ -53,3 +53,6 @@ class Config:
     DOWNLOAD_TIMEOUT_RECORD_EXPIRY = int(
         os.environ.get("DOWNLOAD_TIMEOUT_EXPIRE_RECORD", 60 * 60 * 24 * 7)
     )  # 7 days
+    DOWNLOAD_TOO_LARGE_RECORD_EXPIRY = int(
+        os.environ.get("DOWNLOAD_TOO_LARGE_EXPIRE_RECORD", 60 * 60 * 24 * 7)
+    )  # 7 days

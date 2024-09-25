@@ -7,6 +7,7 @@ class DownloadStatus(Enum):
     COMPLETED = "COMPLETED"
     TIMEOUT = "TIMEOUT"
     ERROR = "ERROR"
+    TOO_LARGE = "TOO_LARGE"
 
 
 class SonicBitStatus(Enum):
