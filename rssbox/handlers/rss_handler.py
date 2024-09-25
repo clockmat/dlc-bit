@@ -54,8 +54,8 @@ class RSSHandler:
         self.scheduler.add_job(
             self.watch_rss.check,
             "interval",
-            minutes=1,
-            id=f"watchrss={self.id}",
+            minutes=3,
+            id=f"watchrss-{self.id}",
             next_run_time=random_start_time,
         )
         t = Thread(target=self.watch_rss.check)
