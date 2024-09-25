@@ -22,9 +22,9 @@ class PTXHook(Hook):
     ) -> bool:
         if sonicbit.time_taken < timedelta(hours=1):
             logger.warning(
-                f"Removing large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken_str}"
+                f"Stopping large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken_str}"
             )
-            download.delete()
+            download.mark_as_too_large()
         else:
             download.mark_as_failed()
             self.on_after_upload_error(
