@@ -66,23 +66,30 @@ class Download:
 
         if self.retries >= Config.DOWNLOAD_RETRIES:
             logger.warning(f"Retry limit reached for {self.name}")
-            self.status = DownloadStatus.ERROR
-            self.hash = None
-            self.locked_by = None
-            self.expire_at = datetime.now(timezone.utc) + timedelta(
-                seconds=Config.DOWNLOAD_ERROR_RECORD_EXPIRY
+            self._stop_with_status(
+                DownloadStatus.ERROR, Config.DOWNLOAD_ERROR_RECORD_EXPIRY
             )
-            self.save()
         else:
             self.mark_as_pending()
 
     def mark_as_timeout(self):
-        self.status = DownloadStatus.TIMEOUT
+        self._stop_with_status(
+            DownloadStatus.TIMEOUT, Config.DOWNLOAD_TIMEOUT_RECORD_EXPIRY
+        )
+
+    def mark_as_too_large(self):
+        self._stop_with_status(
+            DownloadStatus.TOO_LARGE, Config.DOWNLOAD_TOO_LARGE_RECORD_EXPIRY
+        )
+
+    def _stop_with_status(self, status: DownloadStatus, expire_in_seconds: int = None):
+        self.status = status
         self.hash = None
         self.locked_by = None
-        self.expire_at = datetime.now(timezone.utc) + timedelta(
-            seconds=Config.DOWNLOAD_TIMEOUT_RECORD_EXPIRY
-        )
+        if expire_in_seconds:
+            self.expire_at = datetime.now(timezone.utc) + timedelta(
+                seconds=expire_in_seconds
+            )
         self.save()
 
     def unlock(self):
