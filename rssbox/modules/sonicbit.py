@@ -35,7 +35,7 @@ class SonicBit(SonicBitClient):
         self.locked_by = account.get("locked_by")
         self.priority = account.get("priority", 0)
         self.last_checked_at = account.get("last_checked_at")
-        self.last_used_at = account.get("last_used_at")
+        self.last_used_at = account.get("last_used_at", datetime.now(tz=timezone.utc))
 
         self.__download = None
 
