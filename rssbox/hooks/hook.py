@@ -39,3 +39,9 @@ class Hook:
         self, sonicbit: SonicBit, download_dict: dict, files_uploaded: int
     ):
         """Called when an upload is complete"""
+
+    def on_add_download_error(
+        self, sonicbit: SonicBit, download: Download, error: Exception
+    ) -> bool:
+        """Called when an add download fails"""
+        return True
