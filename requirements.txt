@@ -8,3 +8,6 @@ apscheduler
 humanize
 click
 bencode.py
+google-auth
+google-api-python-client
+parse-torrent-title

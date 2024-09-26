@@ -7,9 +7,9 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 
 from rssbox import accounts, downloads, watchrss_database, workers
 from rssbox.config import Config
-from rssbox.handlers.file_handler import FileHandler
+from rssbox.handlers.gdrive_handler import GDriveHandler
 from rssbox.handlers.rss_handler import RSSHandler
-from rssbox.hooks.hook import Hook
+from rssbox.hooks.tgx_hook import TGXHook
 from rssbox.sonicbit_client import SonicBitClient
 from rssbox.utils import clean_empty_dirs
 
@@ -25,7 +25,7 @@ def main(
     client_id: str = None,
 ):
     clean_empty_dirs(Config.DOWNLOAD_PATH)
-    hook = Hook()
+    hook = TGXHook()
     scheduler_class = BlockingScheduler if rss_only else BackgroundScheduler
     scheduler = scheduler_class(timezone="UTC")
 
@@ -50,7 +50,7 @@ def main(
         if not download_only and not upload_only and not process_only:
             process_only = True
 
-        file_handler = FileHandler()
+        file_handler = GDriveHandler()
         sonicbit_client = SonicBitClient(
             accounts, downloads, workers, scheduler, file_handler, hook, client_id
         )
