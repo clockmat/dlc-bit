@@ -9,7 +9,7 @@ from rssbox import downloads, mongo_client
 from rssbox.config import Config
 from rssbox.enum import SonicBitStatus
 from rssbox.modules.download import Download
-from rssbox.modules.errors import SeedboxDownException
+from rssbox.modules.errors import SeedboxDownException, TorrentHashCalculationException
 from rssbox.modules.token_handler import TokenHandler
 from rssbox.utils import calulate_torrent_hash
 
@@ -75,7 +75,7 @@ class SonicBit(SonicBitClient):
     def add_download_with_retries(self, download: Download, retries: int = 3):
         try:
             self.add_download(download)
-        except SeedboxDownException:
+        except (SeedboxDownException, TorrentHashCalculationException):
             raise
         except Exception as error:
             if retries > 0:
