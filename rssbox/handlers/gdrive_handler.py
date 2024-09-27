@@ -60,7 +60,7 @@ class GDriveHandler(FileHandler):
             folder_id = self.folder_id
 
             parsed_file_name = PTN.parse(file.name, standardise=False)
-            if parsed_file_name.get("episode") or parsed_file_name.get("episodeName"):
+            if parsed_file_name.get("episode"):
                 folder_title = self.reformat_title(file.name, without_episode=True)
                 folder_id = self.find_or_create_folder(folder_title)
 
@@ -227,6 +227,10 @@ class GDriveHandler(FileHandler):
                 episode_text = f"{episode}{episode_name}"
 
             tv_show = f"{season}{episode_text}"
+        else:
+            tv_show = parsed.get("episodeName", "")
+            if tv_show:
+                tv_show = f"{seperator}-{seperator}{seperator.join(tv_show.split())}"
 
         return (
             f"{title}{tv_show}{year}{resolution}{quality}{network}{codec}{audio}{ext}"
