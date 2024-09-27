@@ -215,7 +215,7 @@ class SonicBitClient:
                         sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                         sleep(5)
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"Failed to upload {download.name} to {sonicbit.id}: {error}"
                     )
                     soft = self.hook.on_before_upload_error(sonicbit, download, error)
