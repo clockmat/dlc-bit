@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 
 from feedparser import FeedParserDict
 
@@ -19,6 +20,16 @@ class TGXHook(Hook):
             return super().on_new_entry(entry)
 
         return False
+
+    def on_sonicbit_download_not_found(
+        self, sonicbit: SonicBit, download: Download
+    ) -> bool:
+        if sonicbit.time_taken < timedelta(minutes=10):
+            download.mark_as_too_large()
+            sonicbit.mark_as_idle()
+            return False
+
+        return super().on_sonicbit_download_not_found(sonicbit, download)
 
     def on_add_download_error(
         self, sonicbit: SonicBit, download: Download, error: Exception
