@@ -3,7 +3,9 @@ from datetime import datetime, timedelta, timezone
 from time import sleep
 
 from pymongo.collection import Collection
+from requests.exceptions import ConnectionError
 from sonicbit import SonicBit as SonicBitClient
+from sonicbit.types import TorrentList
 
 from rssbox import downloads, mongo_client
 from rssbox.config import Config
@@ -172,6 +174,16 @@ class SonicBit(SonicBitClient):
                 self.__download = Download(downloads, raw_download)
                 return self.__download
         return None
+
+    def list_torrents(self, retry: int = 3) -> TorrentList:
+        try:
+            return super().list_torrents()
+        except ConnectionError as error:
+            if retry > 0:
+                logger.debug(f"Retry listing torrents for {self.id}: {error}")
+                return self.list_torrents(retry - 1)
+
+            raise error
 
     def verify_download(
         self, hash: str, timeout: int = Config.DOWNLOAD_ADD_VERIFY_TIMEOUT
