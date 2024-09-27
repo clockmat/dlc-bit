@@ -77,8 +77,8 @@ class SonicBit(SonicBitClient):
     def add_download_with_retries(self, download: Download, retries: int = 3):
         try:
             self.add_download(download)
-        except (SeedboxDownException, TorrentHashCalculationException):
-            raise
+        except (SeedboxDownException, TorrentHashCalculationException) as error:
+            raise error from None
         except Exception as error:
             if retries > 0:
                 logger.exception(
@@ -86,7 +86,7 @@ class SonicBit(SonicBitClient):
                 )
                 self.add_download_with_retries(download, retries - 1)
             else:
-                raise error
+                raise error from None
 
     def save(self):
         self.client.update_one(
@@ -183,7 +183,7 @@ class SonicBit(SonicBitClient):
                 logger.debug(f"Retry listing torrents for {self.id}: {error}")
                 return self.list_torrents(retry - 1)
 
-            raise error
+            raise error from None
 
     def verify_download(
         self, hash: str, timeout: int = Config.DOWNLOAD_ADD_VERIFY_TIMEOUT
@@ -193,11 +193,13 @@ class SonicBit(SonicBitClient):
         now = datetime.now(tz=timezone.utc)
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(seconds=timeout):
-                raise Exception(f"Verify download timed out for download hash: {hash}")
+                raise Exception(
+                    f"Verify download timed out for download hash: {hash}"
+                ) from None
 
             torrents = self.list_torrents()
             if not torrents.info.seedbox_status_up:
-                raise SeedboxDownException("Seedbox is down")
+                raise SeedboxDownException("Seedbox is down") from None
 
             for download_hash in torrents.torrents.keys():
                 if hash == download_hash:
