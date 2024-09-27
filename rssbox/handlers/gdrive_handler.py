@@ -49,9 +49,17 @@ class GDriveHandler(FileHandler):
                 upload_count += self.upload_file(title, file.download_url, folder_id)
         else:
             file = files_to_upload[0]
+            folder_id = self.folder_id
+
+            parsed_file_name = PTN.parse(file.name, standardise=False)
+            if parsed_file_name.get("episode") or parsed_file_name.get("episodeName"):
+                folder_title = self.reformat_title(
+                    file.name, file.extension, without_episode=True
+                )
+                folder_id = self.find_or_create_folder(folder_title)
 
             title = self.reformat_title(file.name, file.extension)
-            upload_count += self.upload_file(title, file.download_url)
+            upload_count += self.upload_file(title, file.download_url, folder_id)
 
         return upload_count
 
@@ -106,15 +114,45 @@ class GDriveHandler(FileHandler):
             "parents": [folder_id] if folder_id else [self.folder_id],
         }
 
-        file = (
-            self.client.files().create(supportsTeamDrives=True, body=metadata).execute()
+        folder = (
+            self.client.files().create(supportsAllDrives=True, body=metadata).execute()
         )
-        file_id = file.get("id")
+        file_id = folder.get("id")
 
         logger.info(f"Created folder {folder_name} with id {file_id}")
         return file_id
 
-    def reformat_title(self, parsed: dict | str, ext: str = "", seperator: str = " "):
+    def find_or_create_folder(self, folder_name: str, folder_id: str = None):
+        if not folder_id:
+            folder_id = self.folder_id
+
+        response = (
+            self.client.files()
+            .list(
+                q=f"name = '{folder_name}' and '{folder_id}' in parents and mimeType = '{self.__G_DRIVE_DIR_MIME_TYPE}'",
+                supportsAllDrives=True,
+                fields="files(id, name)",
+            )
+            .execute()
+        )
+
+        if response.get("files"):
+            existing_folder = response.get("files")[0]
+            if existing_folder.get("name") == folder_name:
+                logger.info(
+                    f"Found folder {folder_name} with id {existing_folder.get('id')}"
+                )
+                return existing_folder.get("id")
+
+        return self.create_folder(folder_name, folder_id)
+
+    def reformat_title(
+        self,
+        parsed: dict | str,
+        ext: str = "",
+        seperator: str = " ",
+        without_episode: bool = False,
+    ):
         if isinstance(parsed, str):
             parsed = PTN.parse(parsed, standardise=False)
 
@@ -159,20 +197,27 @@ class GDriveHandler(FileHandler):
                 else:
                     season = f"{seperator}S{season:02d}"
 
-            episode_name = parsed.get("episodeName", "")
-            if episode_name:
-                episode_name = f"{seperator}{seperator.join(episode_name.split())}"
+            episode_text = ""
+            if not without_episode:
+                episode = parsed.get("episode", "")
+                if episode:
+                    prefix = "" if season else seperator
+                    if isinstance(episode, list):
+                        starting_episode = episode[0]
+                        ending_episode = episode[-1]
+                        episode = (
+                            f"{prefix}E{starting_episode:02d}-E{ending_episode:02d}"
+                        )
+                    else:
+                        episode = f"{prefix}E{episode:02d}"
 
-            episode = parsed.get("episode", "")
-            if episode:
-                prefix = "" if season else seperator
-                if isinstance(episode, list):
-                    starting_episode = episode[0]
-                    ending_episode = episode[-1]
-                    episode = f"{prefix}E{starting_episode:02d}-E{ending_episode:02d}"
-                else:
-                    episode = f"{prefix}E{episode:02d}"
-            tv_show = f"{season}{episode}{episode_name}"
+                episode_name = parsed.get("episodeName", "")
+                if episode_name:
+                    episode_name = f"{seperator}{seperator.join(episode_name.split())}"
+
+                episode_text = f"{episode}{episode_name}"
+
+            tv_show = f"{season}{episode_text}"
 
         return (
             f"{title}{tv_show}{year}{resolution}{quality}{network}{codec}{audio}{ext}"
