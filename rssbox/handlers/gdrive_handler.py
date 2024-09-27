@@ -232,7 +232,7 @@ class GDriveHandler(FileHandler):
             f"{title}{tv_show}{year}{resolution}{quality}{network}{codec}{audio}{ext}"
         )
 
-    def format_search_keyword(keyword):
+    def format_search_keyword(self, keyword):
         # escape "\"
         # the \ should be escaped first
         keyword = keyword.replace("\\", "\\\\")
