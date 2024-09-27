@@ -44,6 +44,7 @@ class GDriveHandler(FileHandler):
             else:
                 _, ext = os.path.splitext(file.name)
                 if self.check_extension(ext[1:]) and file.size > self.__MIN_FILE_SIZE:
+                    file.extension = ext[1:]
                     files_to_upload.append(file)
 
         if len(files_to_upload) > 1:
