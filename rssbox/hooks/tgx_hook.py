@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import timedelta
 
@@ -8,6 +9,8 @@ from rssbox.hooks.hook import Hook
 from rssbox.modules.download import Download
 from rssbox.modules.errors import TorrentHashCalculationException
 from rssbox.modules.sonicbit import SonicBit
+
+logger = logging.getLogger(__name__)
 
 
 class TGXHook(Hook):
@@ -25,6 +28,9 @@ class TGXHook(Hook):
         self, sonicbit: SonicBit, download: Download
     ) -> bool:
         if sonicbit.time_taken < timedelta(minutes=10):
+            logger.warning(
+                f"Stopping large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken_str}"
+            )
             download.mark_as_too_large()
             sonicbit.mark_as_idle()
             return False
