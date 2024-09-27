@@ -132,10 +132,13 @@ class GDriveHandler(FileHandler):
         if not folder_id:
             folder_id = self.folder_id
 
+        folder_name = self.format_search_keyword(folder_name)
         response = (
             self.client.files()
             .list(
                 q=f"name = '{folder_name}' and '{folder_id}' in parents and mimeType = '{self.__G_DRIVE_DIR_MIME_TYPE}'",
+                spaces="drive",
+                includeItemsFromAllDrives=True,
                 supportsAllDrives=True,
                 fields="files(id, name)",
             )
@@ -228,3 +231,11 @@ class GDriveHandler(FileHandler):
         return (
             f"{title}{tv_show}{year}{resolution}{quality}{network}{codec}{audio}{ext}"
         )
+
+    def format_search_keyword(keyword):
+        # escape "\"
+        # the \ should be escaped first
+        keyword = keyword.replace("\\", "\\\\")
+        # escape '''
+        keyword = keyword.replace("'", "\\'")
+        return keyword
