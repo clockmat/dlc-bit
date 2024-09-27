@@ -60,9 +60,7 @@ class GDriveHandler(FileHandler):
 
             parsed_file_name = PTN.parse(file.name, standardise=False)
             if parsed_file_name.get("episode") or parsed_file_name.get("episodeName"):
-                folder_title = self.reformat_title(
-                    file.name, file.extension, without_episode=True
-                )
+                folder_title = self.reformat_title(file.name, without_episode=True)
                 folder_id = self.find_or_create_folder(folder_title)
 
             title = self.reformat_title(file.name, file.extension)
