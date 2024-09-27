@@ -49,8 +49,8 @@ class GDriveHandler(FileHandler):
                     files_to_upload.append(file)
 
         if len(files_to_upload) > 1:
-            title = self.reformat_title(download.name)
-            folder_id = self.create_folder(title)
+            folder_title = self.reformat_title(download.name, without_episode=True)
+            folder_id = self.find_or_create_folder(folder_title)
 
             for file in files_to_upload:
                 title = self.reformat_title(file.name, file.extension)
