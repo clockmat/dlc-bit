@@ -28,6 +28,7 @@ class GDriveHandler(FileHandler):
         self.client = build("drive", "v3", credentials=creds)
         self.folder_id = os.environ["GDRIVE_FOLDER_ID"]
         self.__G_DRIVE_DIR_MIME_TYPE = "application/vnd.google-apps.folder"
+        self.__MIN_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
     def upload(self, download: Download, torrent: Torrent) -> int:
         upload_count = 0
@@ -36,9 +37,14 @@ class GDriveHandler(FileHandler):
 
         for file in torrent.files:
             if (
-                self.check_extension(file.extension) and file.size > 50 * 1024 * 1024
-            ):  # 50MB
+                self.check_extension(file.extension)
+                and file.size > self.__MIN_FILE_SIZE
+            ):
                 files_to_upload.append(file)
+            else:
+                _, ext = os.path.splitext(file.name)
+                if self.check_extension(ext[1:]) and file.size > self.__MIN_FILE_SIZE:
+                    files_to_upload.append(file)
 
         if len(files_to_upload) > 1:
             title = self.reformat_title(download.name)
