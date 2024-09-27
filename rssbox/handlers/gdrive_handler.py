@@ -54,7 +54,9 @@ class GDriveHandler(FileHandler):
 
             for file in files_to_upload:
                 title = self.reformat_title(file.name, file.extension)
-                upload_count += self.upload_file(title, file.download_url, folder_id)
+                upload_count += self.find_or_upload_file(
+                    title, file.size, file.download_url, folder_id
+                )
         else:
             file = files_to_upload[0]
             folder_id = self.folder_id
@@ -65,16 +67,13 @@ class GDriveHandler(FileHandler):
                 folder_id = self.find_or_create_folder(folder_title)
 
             title = self.reformat_title(file.name, file.extension)
-            upload_count += self.upload_file(title, file.download_url, folder_id)
+            upload_count += self.find_or_upload_file(
+                title, file.size, file.download_url, folder_id
+            )
 
         return upload_count
 
-    def upload_file(
-        self, filename: str, download_url: str, folder_id: str = None
-    ) -> int:
-        if not folder_id:
-            folder_id = self.folder_id
-
+    def upload_file(self, filename: str, download_url: str, folder_id: str) -> int:
         filepath = self.download_file_from_url(download_url, filename)
         file_metadata = {
             "name": filename,
@@ -112,6 +111,36 @@ class GDriveHandler(FileHandler):
                     f.flush()
 
         return filepath
+
+    def find_or_upload_file(
+        self, filename: str, filesize: int, download_url: str, folder_id: str = None
+    ):
+        if not folder_id:
+            folder_id = self.folder_id
+
+        filename = self.format_search_keyword(filename)
+        response = (
+            self.client.files()
+            .list(
+                q=f"name = '{filename}' and '{folder_id}' in parents",
+                spaces="drive",
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+                fields="files(id, name, size)",
+            )
+            .execute()
+        )
+
+        if response.get("files"):
+            existing_file = response.get("files")[0]
+            if (
+                existing_file.get("name") == filename
+                and existing_file.get("size") == filesize
+            ):
+                logger.info(f"Found file {filename} with id {existing_file.get('id')}")
+                return existing_file.get("id")
+
+        return self.upload_file(filename, download_url, folder_id)
 
     def create_folder(self, folder_name: str, folder_id: str = None):
         metadata = {
