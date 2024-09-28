@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from base64 import b64decode
 from typing import List
 
@@ -218,6 +219,7 @@ class GDriveHandler(FileHandler):
 
         codec = parsed.get("codec", "")
         if codec:
+            codec = re.sub(r"[\.\s]", "", codec)  # remove dots and whitespace
             codec = f"{seperator}{codec}"
 
         audio = parsed.get("audio", "")
