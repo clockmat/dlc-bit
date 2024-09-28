@@ -6,7 +6,7 @@ import shutil
 import bencodepy
 import requests
 
-from rssbox.modules.errors import TorrentHashCalculationException
+from rssbox.modules.errors import TorrentHashCalculationError
 
 
 def delete_file(*files):
@@ -46,7 +46,7 @@ def calulate_torrent_hash(uri: str) -> str | None:
             torrent_info = bencodepy.encode(decoded_torrent[b"info"])
             return hashlib.sha1(torrent_info).hexdigest()
 
-        raise TorrentHashCalculationException(
+        raise TorrentHashCalculationError(
             f"Failed to download torrent: {response.status_code}"
         )
     else:
