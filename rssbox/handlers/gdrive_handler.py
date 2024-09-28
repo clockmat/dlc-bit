@@ -138,7 +138,7 @@ class GDriveHandler(FileHandler):
                 and existing_file.get("size") == filesize
             ):
                 logger.info(f"Found file {filename} with id {existing_file.get('id')}")
-                return existing_file.get("id")
+                return 1
 
         return self.upload_file(filename, download_url, folder_id)
 
