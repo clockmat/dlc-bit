@@ -4,6 +4,7 @@ import re
 from feedparser import FeedParserDict
 
 from rssbox.config import Config
+from rssbox.enum import DownloadStatus
 from rssbox.hooks.hook import Hook
 from rssbox.modules.download import Download
 from rssbox.modules.errors import TorrentHashCalculationError
@@ -41,7 +42,7 @@ class TGXHook(Hook):
     ) -> bool:
         if isinstance(error, TorrentHashCalculationError):
             download._stop_with_status(
-                Download.INVALID_TORRENT, Config.DOWNLOAD_ERROR_RECORD_EXPIRY
+                DownloadStatus.INVALID_TORRENT, Config.DOWNLOAD_ERROR_RECORD_EXPIRY
             )
             sonicbit.mark_as_idle()
             return False
