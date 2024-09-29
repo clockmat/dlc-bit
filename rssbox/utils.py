@@ -6,6 +6,8 @@ import shutil
 import bencodepy
 import requests
 
+from rssbox.modules.errors import TorrentHashCalculationError
+
 
 def delete_file(*files):
     for file in files:
@@ -38,9 +40,14 @@ def calulate_torrent_hash(uri: str) -> str | None:
     if uri.startswith("magnet:"):
         return re.search(r"xt=urn:btih:([a-zA-Z0-9]+)", uri).group(1)
     elif uri.startswith("http"):
-        torrent_file = requests.get(uri).content
-        decoded_torrent = bencodepy.decode(torrent_file)
-        torrent_info = bencodepy.encode(decoded_torrent[b"info"])
-        return hashlib.sha1(torrent_info).hexdigest()
+        response = requests.get(uri)
+        if response.status_code == 200:
+            decoded_torrent = bencodepy.decode(response.content)
+            torrent_info = bencodepy.encode(decoded_torrent[b"info"])
+            return hashlib.sha1(torrent_info).hexdigest()
+
+        raise TorrentHashCalculationError(
+            f"Failed to download torrent: {response.status_code}"
+        )
     else:
         raise NotImplementedError(f"Unsupported URI: {uri}")

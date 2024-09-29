@@ -215,7 +215,7 @@ class SonicBitClient:
                         sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                         sleep(5)
                 except Exception as error:
-                    logger.error(
+                    logger.exception(
                         f"Failed to upload {download.name} to {sonicbit.id}: {error}"
                     )
                     soft = self.hook.on_before_upload_error(sonicbit, download, error)
@@ -257,6 +257,7 @@ class SonicBitClient:
                 sonicbit.add_download_with_retries(download=download)
                 logger.info(f"Torrent {download.name} added to {sonicbit.id}")
             except Exception as error:
-                download.unlock()
-                sonicbit.mark_as_idle()
                 logger.error(f"Failed to add {download.name} to {sonicbit.id}: {error}")
+                if self.hook.on_add_download_error(sonicbit, download, error):
+                    download.unlock()
+                    sonicbit.mark_as_idle()

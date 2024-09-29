@@ -12,7 +12,7 @@ class Config:
     MONGO_URL = os.environ["MONGO_URL"]
     MONGO_DATABASE = os.environ.get("MONGO_DATABASE")
 
-    DEFAULT_FILTER_EXTENSIONS = "mkv,mp4,avi,mpg,mpeg,webm,flv,wmv,mov,m4v,3gp,ogv,mkv,avi,mpg,mpeg,webm,flv,wmv,mov,m4v,3gp,ogv"
+    DEFAULT_FILTER_EXTENSIONS = "mp4,flv,3gp,mov,asf,mpg,avi,mpeg,wmv,rm,dat,mkv,vob,m2v,f4v,m4v,m2t,mts,webm,ts"
 
     FILTER_EXTENSIONS = os.environ.get("FILTER_EXTENSIONS", DEFAULT_FILTER_EXTENSIONS)
     FILTER_EXTENSIONS = list(

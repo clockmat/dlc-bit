@@ -8,6 +8,7 @@ class DownloadStatus(Enum):
     TIMEOUT = "TIMEOUT"
     ERROR = "ERROR"
     TOO_LARGE = "TOO_LARGE"
+    INVALID_TORRENT = "INVALID_TORRENT"
 
 
 class SonicBitStatus(Enum):

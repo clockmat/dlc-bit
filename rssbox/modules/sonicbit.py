@@ -2,14 +2,21 @@ import logging
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
+from humanize import naturalsize
 from pymongo.collection import Collection
+from requests.exceptions import ConnectionError
 from sonicbit import SonicBit as SonicBitClient
+from sonicbit.types import TorrentList
 
 from rssbox import downloads, mongo_client
 from rssbox.config import Config
 from rssbox.enum import SonicBitStatus
 from rssbox.modules.download import Download
-from rssbox.modules.errors import SeedboxDownException
+from rssbox.modules.errors import (
+    SeedboxDownError,
+    TooLargeTorrentError,
+    TorrentHashCalculationError,
+)
 from rssbox.modules.token_handler import TokenHandler
 from rssbox.utils import calulate_torrent_hash
 
@@ -71,20 +78,6 @@ class SonicBit(SonicBitClient):
             self.mark_as_downloading(download, hash=hash)
         else:
             raise Exception("Download URL does not match")
-
-    def add_download_with_retries(self, download: Download, retries: int = 3):
-        try:
-            self.add_download(download)
-        except SeedboxDownException:
-            raise
-        except Exception as error:
-            if retries > 0:
-                logger.exception(
-                    f"Retry adding download {download.name} after error: {error}"
-                )
-                self.add_download_with_retries(download, retries - 1)
-            else:
-                raise error
 
     def save(self):
         self.client.update_one(
@@ -173,6 +166,16 @@ class SonicBit(SonicBitClient):
                 return self.__download
         return None
 
+    def list_torrents(self, retry: int = 3) -> TorrentList:
+        try:
+            return super().list_torrents()
+        except ConnectionError as error:
+            if retry > 0:
+                logger.debug(f"Retry listing torrents for {self.id}: {error}")
+                return self.list_torrents(retry - 1)
+
+            raise error from None
+
     def verify_download(
         self, hash: str, timeout: int = Config.DOWNLOAD_ADD_VERIFY_TIMEOUT
     ) -> bool:
@@ -185,12 +188,42 @@ class SonicBit(SonicBitClient):
 
             torrents = self.list_torrents()
             if not torrents.info.seedbox_status_up:
-                raise SeedboxDownException("Seedbox is down")
+                raise SeedboxDownError("Seedbox is down")
 
-            for download_hash in torrents.torrents.keys():
+            for download_hash, torrent in torrents.torrents.items():
                 if hash == download_hash:
+                    if torrent.deleted:
+                        if (
+                            torrent.deleted_reason
+                            == "torsize_large_than_torsize_allowed"
+                        ):
+                            raise TooLargeTorrentError(
+                                f"Torrent is too large ({naturalsize(torrent.size)})"
+                            )
+                        else:
+                            raise Exception(
+                                f"Torrent is deleted ({torrent.deleted_reason})"
+                            )
                     return True
             sleep(1)
+
+    def add_download_with_retries(self, download: Download, retries: int = 3):
+        try:
+            self.add_download(download)
+        except (
+            SeedboxDownError,
+            TorrentHashCalculationError,
+            TooLargeTorrentError,
+        ) as error:
+            raise error from None
+        except Exception as error:
+            if retries > 0:
+                logger.exception(
+                    f"Retry adding download {download.name} after error: {error}"
+                )
+                self.add_download_with_retries(download, retries - 1)
+            else:
+                raise error from None
 
     @property
     def download(self) -> Download | None:

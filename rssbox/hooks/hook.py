@@ -1,7 +1,12 @@
+import logging
+
 from feedparser import FeedParserDict
 
 from rssbox.modules.download import Download
+from rssbox.modules.errors import TooLargeTorrentError
 from rssbox.modules.sonicbit import SonicBit
+
+logger = logging.getLogger(__name__)
 
 
 class Hook:
@@ -39,3 +44,15 @@ class Hook:
         self, sonicbit: SonicBit, download_dict: dict, files_uploaded: int
     ):
         """Called when an upload is complete"""
+
+    def on_add_download_error(
+        self, sonicbit: SonicBit, download: Download, error: Exception
+    ) -> bool:
+        """Called when an add download fails"""
+        if isinstance(error, TooLargeTorrentError):
+            logger.info(f"Stopping large torrent: {download.name}")
+            download.mark_as_too_large()
+            sonicbit.mark_as_idle()
+            return False
+
+        return True
