@@ -162,7 +162,6 @@ class SonicBitClient:
 
     def check_downloads(self):
         now = datetime.now(tz=timezone.utc)
-
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(
                 seconds=Config.DOWNLOAD_CHECK_TIMEOUT
@@ -173,66 +172,72 @@ class SonicBitClient:
             if not sonicbit:
                 break
 
-            download = sonicbit.download
+            try:
+                self.__check_download(sonicbit=sonicbit)
+            except Exception as error:
+                logger.exception(f"Error while checking downloads: {error}")
 
-            if not download:
-                logger.warning(
-                    f"SonicBit downloading but no download found for {sonicbit.download_id} ({sonicbit.id})"
-                )
-                sonicbit.mark_as_idle()
-                continue
-            if not download.hash:
-                logger.warning(
-                    f"SonicBit downloading but no download's hash found for {sonicbit.download_id} ({sonicbit.id})"
-                )
+    def __check_download(self, sonicbit: SonicBit):
+        download = sonicbit.download
+
+        if not download:
+            logger.warning(
+                f"SonicBit downloading but no download found for {sonicbit.download_id} ({sonicbit.id})"
+            )
+            sonicbit.mark_as_idle()
+            return
+        if not download.hash:
+            logger.warning(
+                f"SonicBit downloading but no download's hash found for {sonicbit.download_id} ({sonicbit.id})"
+            )
+            sonicbit.reset()
+            return
+
+        torrent_list = sonicbit.list_torrents()
+        torrent = torrent_list.torrents.get(download.hash)
+        if not torrent:
+            logger.warning(
+                f"Torrent not found for {download.name} by {sonicbit.id} after {sonicbit.time_taken_str}"
+            )
+            if self.hook.on_sonicbit_download_not_found(sonicbit, download):
                 sonicbit.reset()
-                continue
+            return
 
-            torrent_list = sonicbit.list_torrents()
-            torrent = torrent_list.torrents.get(download.hash)
-            if not torrent:
-                logger.warning(
-                    f"Torrent not found for {download.name} by {sonicbit.id} after {sonicbit.time_taken_str}"
-                )
-                if self.hook.on_sonicbit_download_not_found(sonicbit, download):
-                    sonicbit.reset()
-                continue
-
-            if torrent.progress == 100:
-                logger.info(f"Downloaded {download.name} by {sonicbit.id}")
-                try:
-                    sonicbit.mark_as_uploading(self.id)
-                    files_uploaded = self.file_handler.upload(download, torrent)
-                    if files_uploaded:
-                        sonicbit.mark_as_completed()
-                        self.hook.on_upload_complete(
-                            sonicbit, download.dict, files_uploaded
-                        )
-                    else:
-                        logger.warning(
-                            f"No files uploaded for {download.name} by {sonicbit.id}"
-                        )
-                        sonicbit.unlock(SonicBitStatus.DOWNLOADING)
-                        sleep(5)
-                except Exception as error:
-                    logger.exception(
-                        f"Failed to upload {download.name} to {sonicbit.id}: {error}"
+        if torrent.progress == 100:
+            logger.info(f"Downloaded {download.name} by {sonicbit.id}")
+            try:
+                sonicbit.mark_as_uploading(self.id)
+                files_uploaded = self.file_handler.upload(download, torrent)
+                if files_uploaded:
+                    sonicbit.mark_as_completed()
+                    self.hook.on_upload_complete(
+                        sonicbit, download.dict, files_uploaded
                     )
-                    soft = self.hook.on_before_upload_error(sonicbit, download, error)
-                    sonicbit.mark_as_failed(soft=soft)
-                    self.hook.on_after_upload_error(sonicbit, download, error)
-            else:
-                if sonicbit.download_timeout():
-                    logger.warning(
-                        f"Download timed out for {download.name} by {sonicbit.id}"
-                    )
-                    self.hook.on_download_timeout(download)
                 else:
-                    logger.debug(
-                        f"Download in progress for {download.name} by {sonicbit.id} ({torrent.progress}%) ({sonicbit.time_taken_str})"
+                    logger.warning(
+                        f"No files uploaded for {download.name} by {sonicbit.id}"
                     )
                     sonicbit.unlock(SonicBitStatus.DOWNLOADING)
                     sleep(5)
+            except Exception as error:
+                logger.exception(
+                    f"Failed to upload {download.name} to {sonicbit.id}: {error}"
+                )
+                soft = self.hook.on_before_upload_error(sonicbit, download, error)
+                sonicbit.mark_as_failed(soft=soft)
+                self.hook.on_after_upload_error(sonicbit, download, error)
+        else:
+            if sonicbit.download_timeout():
+                logger.warning(
+                    f"Download timed out for {download.name} by {sonicbit.id}"
+                )
+                self.hook.on_download_timeout(download)
+            else:
+                logger.debug(
+                    f"Download in progress for {download.name} by {sonicbit.id} ({torrent.progress}%) ({sonicbit.time_taken_str})"
+                )
+                sonicbit.unlock(SonicBitStatus.DOWNLOADING)
+                sleep(5)
 
     def start_downloads(self):
         now = datetime.now(tz=timezone.utc)
