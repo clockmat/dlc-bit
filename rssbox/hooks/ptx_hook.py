@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta
 
 from feedparser import FeedParserDict
 from translators import translate_text
@@ -20,16 +19,6 @@ class PTXHook(Hook):
     def on_sonicbit_download_not_found(
         self, sonicbit: SonicBit, download: Download
     ) -> bool:
-        if sonicbit.time_taken < timedelta(hours=1):
-            logger.warning(
-                f"Stopping large download {download.name} from sonicbit {sonicbit.id} after {sonicbit.time_taken_str}"
-            )
-            download.mark_as_too_large()
-        else:
-            download.mark_as_failed()
-            self.on_after_upload_error(
-                sonicbit, download, Exception("Download not found")
-            )
-
+        download.mark_as_failed()
         sonicbit.mark_as_idle()
         return False
