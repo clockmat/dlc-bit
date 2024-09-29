@@ -136,7 +136,8 @@ class GDriveHandler(FileHandler):
             existing_file = response.get("files")[0]
             if (
                 existing_file.get("name") == filename
-                and int(existing_file.get("size")) == filesize
+                and abs((int(existing_file.get("size")) - (filesize)))
+                < 1024 * 1024  # 1MB
             ):
                 logger.info(f"Found file {filename} with id {existing_file.get('id')}")
                 return 1
