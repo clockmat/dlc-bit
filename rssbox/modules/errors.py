@@ -8,3 +8,7 @@ class TorrentHashCalculationError(Exception):
 
 class TooLargeTorrentError(Exception):
     """Raised when the torrent is too large"""
+
+
+class VerifyDownloadTimeoutError(Exception):
+    """Raised when the verify download times out"""
