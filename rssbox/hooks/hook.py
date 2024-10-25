@@ -3,7 +3,7 @@ import logging
 from feedparser import FeedParserDict
 
 from rssbox.modules.download import Download
-from rssbox.modules.errors import TooLargeTorrentError
+from rssbox.modules.errors import TooLargeTorrentError, TorrentHashCalculationError
 from rssbox.modules.sonicbit import SonicBit
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,12 @@ class Hook:
         if isinstance(error, TooLargeTorrentError):
             logger.info(f"Stopping large torrent: {download.name}")
             download.mark_as_too_large()
+            sonicbit.mark_as_idle()
+            return False
+        
+        if isinstance(error, TorrentHashCalculationError):
+            logger.info(f"Stopping invalid torrent: {download.name}")
+            download.mark_as_invalid_torrent()
             sonicbit.mark_as_idle()
             return False
 

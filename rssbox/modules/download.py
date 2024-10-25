@@ -82,6 +82,11 @@ class Download:
             DownloadStatus.TOO_LARGE, Config.DOWNLOAD_TOO_LARGE_RECORD_EXPIRY
         )
 
+    def mark_as_invalid_torrent(self):
+        self._stop_with_status(
+            DownloadStatus.INVALID_TORRENT, Config.DOWNLOAD_INVALID_TORRENT_RECORD_EXPIRY
+        )
+
     def _stop_with_status(self, status: DownloadStatus, expire_in_seconds: int = None):
         self.status = status
         self.hash = None

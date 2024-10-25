@@ -56,3 +56,6 @@ class Config:
     DOWNLOAD_TOO_LARGE_RECORD_EXPIRY = int(
         os.environ.get("DOWNLOAD_TOO_LARGE_EXPIRE_RECORD", 60 * 60 * 24 * 7)
     )  # 7 days
+    DOWNLOAD_INVALID_TORRENT_RECORD_EXPIRY = int(
+        os.environ.get("DOWNLOAD_INVALID_TORREN_EXPIRE_RECORD", 60 * 60 * 24 * 7)
+    )  # 7 days
