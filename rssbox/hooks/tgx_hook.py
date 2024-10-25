@@ -36,15 +36,3 @@ class TGXHook(Hook):
         #     return False
 
         return super().on_sonicbit_download_not_found(sonicbit, download)
-
-    def on_add_download_error(
-        self, sonicbit: SonicBit, download: Download, error: Exception
-    ) -> bool:
-        if isinstance(error, TorrentHashCalculationError):
-            download._stop_with_status(
-                DownloadStatus.INVALID_TORRENT, Config.DOWNLOAD_ERROR_RECORD_EXPIRY
-            )
-            sonicbit.mark_as_idle()
-            return False
-
-        return super().on_add_download_error(sonicbit, download, error)
