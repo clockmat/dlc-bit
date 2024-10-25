@@ -184,11 +184,11 @@ class SonicBit(SonicBitClient):
         now = datetime.now(tz=timezone.utc)
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(seconds=timeout):
-                raise Exception(f"Verify download timed out for download hash: {hash}")
+                raise Exception(f"Verify download timed out for download hash: {hash}") from None
 
             torrents = self.list_torrents()
             if not torrents.info.seedbox_status_up:
-                raise SeedboxDownError("Seedbox is down")
+                raise SeedboxDownError("Seedbox is down") from None
 
             for download_hash, torrent in torrents.torrents.items():
                 if hash == download_hash:
@@ -199,11 +199,11 @@ class SonicBit(SonicBitClient):
                         ):
                             raise TooLargeTorrentError(
                                 f"Torrent is too large ({naturalsize(torrent.size)})"
-                            )
+                            ) from None
                         else:
                             raise Exception(
                                 f"Torrent is deleted ({torrent.deleted_reason})"
-                            )
+                            ) from None
                     return True
             sleep(1)
 
