@@ -7,6 +7,7 @@ from pymongo.collection import Collection
 from requests.exceptions import ConnectionError
 from sonicbit import SonicBit as SonicBitClient
 from sonicbit.types import TorrentList
+from requests.exceptions import ConnectionError
 
 from rssbox import downloads, mongo_client
 from rssbox.config import Config
@@ -16,6 +17,7 @@ from rssbox.modules.errors import (
     SeedboxDownError,
     TooLargeTorrentError,
     TorrentHashCalculationError,
+    VerifyDownloadTimeoutError,
 )
 from rssbox.modules.token_handler import TokenHandler
 from rssbox.utils import calulate_torrent_hash
@@ -184,7 +186,7 @@ class SonicBit(SonicBitClient):
         now = datetime.now(tz=timezone.utc)
         while True:
             if datetime.now(tz=timezone.utc) - now > timedelta(seconds=timeout):
-                raise Exception(f"Verify download timed out for download hash: {hash}") from None
+                raise VerifyDownloadTimeoutError(f"Verify download timed out for download hash: {hash}") from None
 
             torrents = self.list_torrents()
             if not torrents.info.seedbox_status_up:
@@ -218,9 +220,14 @@ class SonicBit(SonicBitClient):
             raise error from None
         except Exception as error:
             if retries > 0:
-                logger.exception(
-                    f"Retry adding download {download.name} after error: {error}"
-                )
+                if isinstance(error, (VerifyDownloadTimeoutError, ConnectionError)):
+                    logger.error(
+                        f"Retry adding download {download.name} after error: {error}"
+                    )
+                else:
+                    logger.exception(
+                        f"Retry adding download {download.name} after error: {error}"
+                    )
                 self.add_download_with_retries(download, retries - 1)
             else:
                 raise error from None
